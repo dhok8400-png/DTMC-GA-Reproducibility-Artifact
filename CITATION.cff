@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+title: "DTMC-GA Modularization Reproducibility Artifact"
+version: "0.3.4-phase3C-ci-ready"
+message: "Please cite the associated manuscript. This Phase 3C artifact contains local executable benchmark-suite evidence, retained raw results, Dockerfile improvements, and GitHub Actions CI verification workflow. A public repository URL and Zenodo DOI remain pending and must be inserted after archival and before final journal submission."
+authors:
+  - family-names: "Ibrahim"
+    given-names: "Kamran Adil"
+abstract: "Phase 3C CI-ready executable benchmark-suite artifact with local CSV benchmark fixtures, retained raw results, statistical scripts, figure-generation scripts, a self-contained Dockerfile, and GitHub Actions workflow for artifact verification. The included results are generated from artifact fixtures and are not final third-party large-project runtime evidence."
+license: "MIT"
+date-released: "2026-06-29"
+
+keywords:
+  - DTMC
+  - genetic algorithm
+  - software modularization
+  - reproducibility
+  - benchmark suite
+  - Docker
+  - continuous integration
