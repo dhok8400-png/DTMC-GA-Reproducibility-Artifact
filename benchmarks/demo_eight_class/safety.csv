@@ -1,0 +1,6 @@
+call_use_pair_id,preserves_data_dependence,preserves_anti_dependence,preserves_output_dependence,preserves_control_dependence,no_unsafe_aliasing,no_unordered_side_effects,preserves_exception_order,preserves_object_lifetime,no_volatile_or_atomic_reordering,synchronization_before_first_use,additional_gap
+A_E,true,true,true,true,true,true,true,true,true,true,1.2
+A_F,true,true,true,true,true,true,true,true,true,true,0.8
+B_H,true,true,true,true,true,true,true,true,true,true,0.7
+D_C,true,true,true,true,true,true,true,true,true,true,0.5
+E_H,true,true,true,true,true,true,true,true,true,true,0.4

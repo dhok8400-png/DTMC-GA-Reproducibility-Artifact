@@ -1,0 +1,30 @@
+experiment_name: dtmc_ga_modularization_phase3A_demo
+status: executable_demo_not_final_manuscript_evidence
+systems:
+  - demo_eight_class
+baselines:
+  required:
+    - DTMC-GA
+    - Bunch
+    - FCA
+    - RandomValidPartition
+    - TraditionalMQ
+runs_per_stochastic_algorithm: 30
+retain_all_runs: true
+best_run_filtering: false
+demo_benchmark_dir: benchmarks/demo_eight_class
+ga:
+  population_size: 12
+  generations: 8
+  crossover_rate: 0.85
+  mutation_rate: 0.08
+  tournament_size: 4
+fitness_weights:
+  mq: 1.0
+  communication_cost: 0.5
+  load_balance: 0.3
+  penalties: 2.0
+notes:
+  - Phase 3A provides a real executable pipeline on a small demonstration benchmark.
+  - Demo outputs must not be used as evidence for large-system performance claims.
+  - Final submission still requires real benchmark traces, Docker/CI verification, public repository, and Zenodo DOI.

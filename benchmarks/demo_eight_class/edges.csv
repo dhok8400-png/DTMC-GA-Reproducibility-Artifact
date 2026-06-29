@@ -1,0 +1,13 @@
+caller,callee,count,mode,comm_cost,tgap,async_eligible,call_use_pair_id
+A,B,1,seq,0.20,0.0,false,A_B
+A,D,20,seq,0.30,0.0,false,A_D
+A,E,1,async,0.40,2.0,true,A_E
+A,F,30,async,0.15,3.0,true,A_F
+B,G,5,seq,0.20,0.0,false,B_G
+B,H,5,seq,0.25,0.0,true,B_H
+C,G,1,seq,0.20,0.0,false,C_G
+C,E,1,seq,0.25,0.0,false,C_E
+D,C,5,async,0.35,1.5,true,D_C
+D,H,1,seq,0.20,0.0,false,D_H
+E,H,1,async,0.25,1.0,true,E_H
+G,H,1,seq,0.20,0.0,false,G_H

@@ -1,0 +1,6 @@
+figure_id,source_script,input_file,output_file,status,notes
+phase3B_speedup_by_system,scripts/make_figures.py,raw_results/experiment_runs.csv,figures/phase3B_speedup_by_system.pdf,generated,Phase 3B executable benchmark-suite figure
+phase3B_comm_by_system,scripts/make_figures.py,raw_results/experiment_runs.csv,figures/phase3B_communication_by_system.pdf,generated,Phase 3B executable benchmark-suite figure
+phase3B_runtime_validation,scripts/make_figures.py,raw_results/runtime_validation.csv,figures/phase3B_runtime_validation.pdf,generated,Surrogate runtime-validation figure for pipeline regression
+phase3B_ablation,scripts/make_figures.py,raw_results/ablation_results.csv,figures/phase3B_ablation.pdf,generated,Phase 3B ablation sweep
+phase3B_sensitivity_latency,scripts/make_figures.py,raw_results/sensitivity_results.csv,figures/phase3B_sensitivity_latency.pdf,generated,Phase 3B sensitivity sweep
