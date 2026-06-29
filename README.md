@@ -1,14 +1,17 @@
 # DTMC-GA Modularization Reproducibility Artifact
 
+## Artifact Availability
+
+GitHub repository: https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact
+
+Zenodo DOI: 10.5281/zenodo.21045304
 This artifact is a **Phase 3C CI-ready executable benchmark-suite pipeline** for the manuscript
 "DTMC-GA-Based Modularization for Automated Parallelization of Sequential Software".
 
 Phase 3C preserves the Phase 3B executable benchmark suite and adds Docker/CI verification readiness: it includes a local executable benchmark suite with five CSV fixtures, retained 30-seed runs per algorithm/fixture, executable Python modules for CSV input, CDG construction, DTMC analysis, conservative call-use displacement, DET-inspired partition evaluation, GA/baseline optimization, validation helpers, statistical analysis, and figure generation.
 
 **Important:** the generated Phase 3B executable benchmark-suite results are local fixture-based outputs from the artifact benchmark suite.
-They are not final evidence for the manuscript's large-system performance claims. Final submission
-still requires real benchmark traces, full implementation/measurement evidence, Docker or CI
-verification on a Docker-enabled machine, a public repository, and Zenodo archival DOI.
+They are not final evidence for the manuscript's large-system performance claims. The artifact is publicly available through the GitHub repository and archived on Zenodo using the DOI listed above. The current evidence is based on the local executable benchmark-suite, not external large-project runtime traces.
 
 ## Included implementation modules
 
