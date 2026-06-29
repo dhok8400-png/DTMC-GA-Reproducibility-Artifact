@@ -1,0 +1,34 @@
+name: Phase 3C Artifact Verification
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  python-integrity:
+    name: Python smoke and integrity checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r statistical_analysis/requirements.txt
+      - name: Run Phase 3C CI verification
+        run: bash scripts/phase3c_ci_verify.sh
+
+  docker-integrity:
+    name: Docker build and packaged-output verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -f docker/Dockerfile -t dtmc-ga-artifact:phase3c .
+      - name: Run Phase 3C verification inside Docker
+        run: docker run --rm dtmc-ga-artifact:phase3c
