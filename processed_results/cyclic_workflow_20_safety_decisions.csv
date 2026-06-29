@@ -1,0 +1,12 @@
+call_use_pair_id,allowed,reasons,additional_gap_applied
+C01_C03,True,,0.613
+C02_C04,True,,1.198
+C03_C05,False,exception order not preserved,0.0
+C04_C06,True,,1.201
+C05_C07,True,,1.368
+C06_C09,False,unsafe pointer/reference aliasing possible,0.0
+C09_C12,True,,1.338
+C12_C15,True,,0.782
+C15_C18,True,,1.297
+C11_C04,True,,1.212
+C17_C10,True,,0.61

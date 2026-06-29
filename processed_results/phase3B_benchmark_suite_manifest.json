@@ -1,0 +1,52 @@
+{
+  "phase": "3B",
+  "systems": [
+    "demo_eight_class",
+    "layered_services_12",
+    "event_pipeline_16",
+    "cyclic_workflow_20",
+    "plugin_platform_24"
+  ],
+  "algorithms": [
+    "DTMC-GA",
+    "Bunch",
+    "FCA",
+    "RandomValidPartition",
+    "TraditionalMQ"
+  ],
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "note": "Generated from executable CSV benchmark fixtures included in the artifact. These are real retained raw runs of the artifact pipeline, not external large-project runtime evidence.",
+  "rows_experiment_runs": 750,
+  "rows_per_generation": 2400
+}

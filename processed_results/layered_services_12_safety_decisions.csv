@@ -1,0 +1,8 @@
+call_use_pair_id,allowed,reasons,additional_gap_applied
+C01_C03,True,,1.525
+C02_C04,True,,0.971
+C03_C05,True,,0.251
+C04_C06,True,,0.437
+C05_C07,False,side-effect ordering not guaranteed,0.0
+C06_C09,True,,0.359
+C09_C12,True,,1.598

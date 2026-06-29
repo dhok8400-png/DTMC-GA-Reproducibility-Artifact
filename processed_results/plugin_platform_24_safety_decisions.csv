@@ -1,0 +1,18 @@
+call_use_pair_id,allowed,reasons,additional_gap_applied
+C01_C03,True,,1.282
+C02_C04,False,side-effect ordering not guaranteed,0.0
+C03_C05,True,,0.911
+C04_C06,True,,0.943
+C05_C07,True,,1.405
+C06_C09,True,,0.895
+C09_C12,True,,0.298
+C12_C15,True,,0.97
+C15_C18,True,,1.735
+C18_C21,True,,0.62
+C21_C24,False,exception order not preserved,0.0
+C11_C04,True,,1.092
+C17_C10,True,,0.971
+C23_C16,True,,1.048
+C01_C19,True,,0.552
+C03_C21,True,,0.734
+C05_C23,False,exception order not preserved,0.0

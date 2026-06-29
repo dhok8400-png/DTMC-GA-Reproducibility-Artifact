@@ -1,0 +1,6 @@
+call_use_pair_id,allowed,reasons,additional_gap_applied
+A_E,True,,1.2
+A_F,True,,0.8
+B_H,True,,0.7
+D_C,True,,0.5
+E_H,True,,0.4

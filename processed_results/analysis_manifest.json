@@ -1,0 +1,6 @@
+{
+  "input": "raw_results/experiment_runs.csv",
+  "rows": 750,
+  "note": "All reported rows were retained; no best-run filtering is performed by this script.",
+  "summary_format": "flat one-row-per-system-algorithm-metric"
+}
