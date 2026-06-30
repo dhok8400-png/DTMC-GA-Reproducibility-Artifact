@@ -1,129 +1,174 @@
 # DTMC-GA Modularization Reproducibility Artifact
 
-## Artifact Availability
+## Artifact Availability and Verification Status
 
-GitHub repository: https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact
+This repository contains the public Phase 3C/Phase 5A reproducibility artifact for the manuscript:
 
-Zenodo DOI: 10.5281/zenodo.21045304
-This artifact is a **Phase 3C CI-ready executable benchmark-suite pipeline** for the manuscript
-"DTMC-GA-Based Modularization for Automated Parallelization of Sequential Software".
+**“DTMC-GA-Based Modularization for Automated Parallelization of Sequential Software”**
 
-Phase 3C preserves the Phase 3B executable benchmark suite and adds Docker/CI verification readiness: it includes a local executable benchmark suite with five CSV fixtures, retained 30-seed runs per algorithm/fixture, executable Python modules for CSV input, CDG construction, DTMC analysis, conservative call-use displacement, DET-inspired partition evaluation, GA/baseline optimization, validation helpers, statistical analysis, and figure generation.
+* GitHub repository: https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact
+* Zenodo DOI: 10.5281/zenodo.21045304
+* GitHub release: `v0.3.5-phase3C-zenodo`
+* Docker/CI verification status: **PASSED**
 
-**Important:** the generated Phase 3B executable benchmark-suite results are local fixture-based outputs from the artifact benchmark suite.
-They are not final evidence for the manuscript's large-system performance claims. The artifact is publicly available through the GitHub repository and archived on Zenodo using the DOI listed above. The current evidence is based on the local executable benchmark-suite, not external large-project runtime traces.
+GitHub Actions successfully completed the Phase 3C Artifact Verification workflow, including Python smoke/integrity checks and Docker build/run verification.
 
-## Included implementation modules
+The released artifact includes source code, benchmark fixtures, retained raw results, statistical scripts, generated figures, Docker configuration, and the GitHub Actions CI workflow.
 
-- `src/parser/csv_reader.py`: normalized CSV benchmark reader.
-- `src/cdg_builder/cdg.py`: weighted CDG preparation.
-- `src/dtmc_analyzer/dtmc_matrix.py`: transition matrix, finite-horizon expected visits, simulated visits.
-- `src/call_use_displacement/`: safety-rule decision and safe tgap update.
-- `src/det_calculator/det_model.py`: compact DET-inspired partition evaluator.
-- `src/ga_optimizer/optimizer.py`: executable DTMC-GA and baseline optimizers.
-- `src/validator/schema.py`: output schema checks.
+**Important:** the quantitative evidence in this artifact is based on the local executable benchmark-suite with five fixtures and 750 retained runs. It is not presented as external large-project runtime evidence for Chromium, Firefox, MySQL, OpenCV, Unreal, Godot, or ITK. Those external large-project traces are left for future validation.
 
-## Local executable benchmark suite
+## Included Implementation Modules
 
-The `benchmarks/` folder contains five local CSV fixtures used for Phase 3B generation. The original `demo_eight_class` fixture remains as the smallest smoke-test fixture:
+* `src/parser/csv_reader.py`: normalized CSV benchmark reader.
+* `src/cdg_builder/cdg.py`: weighted class-dependence graph preparation.
+* `src/dtmc_analyzer/dtmc_matrix.py`: transition matrix, finite-horizon expected visits, and simulated visits.
+* `src/call_use_displacement/`: safety-rule decision logic and safe call-use gap update.
+* `src/det_calculator/det_model.py`: compact DET-inspired partition evaluator.
+* `src/ga_optimizer/optimizer.py`: executable DTMC-GA and baseline optimizers.
+* `src/validator/schema.py`: output schema checks.
 
-- `classes.csv`
-- `edges.csv`
-- `safety.csv`
+## Local Executable Benchmark Suite
 
-This benchmark is intended to test the pipeline end-to-end. It is not a substitute for real Chromium,
-Firefox, MySQL, OpenCV, Unreal, Godot, or ITK experiments.
+The `benchmarks/` folder contains five local CSV benchmark fixtures used for Phase 3B/Phase 3C generation. The original `demo_eight_class` fixture remains the smallest smoke-test fixture.
 
-## Run Phase 3B executable benchmark-suite demo experiments
+Each fixture contains CSV files such as:
 
-```bash
-bash scripts/run_demo_experiments.sh
-```
+* `classes.csv`
+* `edges.csv`
+* `safety.csv`
 
-This writes demo rows to:
+These benchmark fixtures are intended to test the full pipeline end-to-end. They are executable local benchmark-suite inputs, not third-party large-project checkouts.
 
-- `raw_results/experiment_runs.csv`
-- `raw_results/runtime_validation.csv`
-- `raw_results/dtmc_validation.csv`
-- `raw_results/mq_validation.csv`
-- `raw_results/ablation_results.csv`
-- `raw_results/sensitivity_results.csv`
-- `raw_results/per_generation_logs.csv`
+## Raw Results
 
-It also writes analysis outputs to `processed_results/` and a demo figure to `figures/`.
+The retained raw results are stored in `raw_results/`.
 
-## Smoke test
+The main experiment file is:
+
+* `raw_results/experiment_runs.csv`
+
+It contains:
+
+* 5 benchmark fixtures
+* 5 algorithms
+* 30 independent seeds per fixture/algorithm
+* 750 retained rows
+* No best-run filtering
+
+Additional validation and analysis files include:
+
+* `raw_results/runtime_validation.csv`
+* `raw_results/dtmc_validation.csv`
+* `raw_results/mq_validation.csv`
+* `raw_results/ablation_results.csv`
+* `raw_results/sensitivity_results.csv`
+* `raw_results/per_generation_logs.csv`
+
+Processed outputs are stored in `processed_results/`.
+
+Generated figures are stored in `figures/`.
+
+## Run the Smoke Test
 
 ```bash
 bash scripts/smoke_test.sh
 ```
 
-## Docker and CI verification
-
-Phase 3C adds a self-contained Dockerfile and GitHub Actions workflow for reproducibility checks.
-
-Build and run the packaged-output verification:
-
-```bash
-docker build -f docker/Dockerfile -t dtmc-ga-artifact:phase3c .
-docker run --rm dtmc-ga-artifact:phase3c
-```
-
-Run the same verification without Docker:
+## Run the Phase 3C Verification Script
 
 ```bash
 bash scripts/phase3c_ci_verify.sh
 ```
 
-Run full benchmark-suite regeneration when more time is available:
+This script checks the packaged artifact outputs, including raw result integrity, fixture/algorithm/seed coverage, duplicate detection, processed outputs, and generated figures.
+
+## Run the Demo Experiment Pipeline
 
 ```bash
-bash scripts/run_benchmark_suite.sh
-# or, after building the image:
-docker run --rm dtmc-ga-artifact:phase3c bash scripts/run_benchmark_suite.sh
+bash scripts/run_demo_experiments.sh
 ```
 
-The ChatGPT execution environment used to prepare this package did not provide a Docker daemon; therefore Docker build/run must still be verified locally or in CI before final submission. The included `.github/workflows/artifact-ci.yml` workflow runs both Python integrity checks and Docker image verification.
+This regenerates the small demo benchmark outputs and writes results to `raw_results/`, `processed_results/`, and `figures/`.
 
-## Final submission requirements still pending
-
-Before journal submission:
-
-1. Replace the demo benchmark with final real benchmark traces.
-2. Run all algorithms for 30 independent seeds per system.
-3. Regenerate all statistical outputs and figures from final raw data.
-4. Replace provisional manuscript values with final artifact-generated values.
-5. Publish the repository, create a release, archive it on Zenodo, and insert the DOI.
-
-
-## Phase 3B benchmark-suite raw results
-
-Run the full included benchmark-suite pipeline with:
+## Run the Full Local Benchmark-Suite Pipeline
 
 ```bash
 bash scripts/run_benchmark_suite.sh
 ```
 
-This generates retained raw results for all local CSV benchmark fixtures in `raw_results/`:
+This regenerates retained raw results for all five local benchmark fixtures.
 
-- `experiment_runs.csv` (5 benchmark fixtures × 5 algorithms × 30 seeds = 750 retained rows)
-- `per_generation_logs.csv`
-- `runtime_validation.csv`
-- `dtmc_validation.csv`
-- `mq_validation.csv`
-- `ablation_results.csv`
-- `sensitivity_results.csv`
+## Docker Verification
 
-The Phase 3B benchmark fixtures are real executable artifact inputs, but they are not third-party large-project checkouts. They should be reported as benchmark-suite evidence and not as final Chromium/Firefox/MySQL runtime evidence.
+The artifact includes a self-contained Dockerfile.
 
-## Phase 3C verification additions
+Build the Docker image:
 
-Phase 3C adds:
+```bash
+docker build -f docker/Dockerfile -t dtmc-ga-artifact:phase3c .
+```
 
-- `scripts/verify_phase3b_integrity.py` for row-count, coverage, duplicate, output, and figure checks.
-- `scripts/phase3c_ci_verify.sh` for lightweight local/CI verification of the packaged outputs.
-- `.github/workflows/artifact-ci.yml` for GitHub Actions Python and Docker verification.
-- A self-contained `docker/Dockerfile` that copies the artifact into the image and runs the Phase 3C CI verification script by default.
-- `DOCKER_REPRODUCTION_LOG.md` documenting the non-Docker checks completed in the current environment and the Docker verification still pending.
+Run the verification inside Docker:
 
-Phase 3C does not add manuscript tables or figures; page count is intentionally preserved.
+```bash
+docker run --rm dtmc-ga-artifact:phase3c
+```
+
+The GitHub Actions workflow already completed the Phase 3C Artifact Verification workflow successfully, including Docker build/run verification.
+
+## GitHub Actions CI
+
+The CI workflow is located at:
+
+```text
+.github/workflows/artifact-ci.yml
+```
+
+It performs:
+
+* Python dependency installation
+* smoke/integrity checks
+* Phase 3C artifact verification
+* Docker image build
+* Docker-based packaged-output verification
+
+## Reproducibility Scope
+
+This artifact supports the reproducible evidence reported in the manuscript for the local executable benchmark-suite.
+
+Included evidence:
+
+* source code
+* benchmark fixtures
+* raw results
+* processed results
+* statistical scripts
+* generated figures
+* Docker configuration
+* GitHub Actions CI workflow
+* Zenodo archival DOI
+
+Not included as final evidence:
+
+* external Chromium runtime traces
+* external Firefox runtime traces
+* external MySQL runtime traces
+* other full large-project runtime measurements
+
+Those large-system studies are treated as future external validation.
+
+## Citation
+
+Please cite the associated manuscript and the archived reproducibility artifact.
+
+Artifact DOI:
+
+```text
+10.5281/zenodo.21045304
+```
+
+GitHub repository:
+
+```text
+https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact
+```
