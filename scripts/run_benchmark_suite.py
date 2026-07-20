@@ -155,7 +155,8 @@ def main():
     pd.DataFrame(all_ablation).to_csv(raw/'ablation_results.csv', index=False)
     pd.DataFrame(all_sens).to_csv(raw/'sensitivity_results.csv', index=False)
     pd.DataFrame(all_assign).to_csv(proc/'module_assignments.csv', index=False)
-       figure_manifest = [
+
+    figure_manifest = [
         {
             'figure_id': 'phase3B_speedup_by_system',
             'source_script': 'scripts/make_figures.py',
@@ -229,6 +230,7 @@ def main():
             'notes': 'Representative inter-module call-weight matrix for plugin_platform_24, DTMC-GA, seed 1',
         },
     ]
+
     pd.DataFrame(figure_manifest).to_csv(
         raw/'figure_manifest.csv',
         index=False
