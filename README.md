@@ -67,6 +67,23 @@ Additional validation and analysis files include:
 Processed outputs are stored in `processed_results/`.
 
 Generated figures are stored in `figures/`.
+## Minimal Dataset and Metadata
+
+The repository contains the essential data needed to support and verify the central fixture-suite findings:
+
+* retained run-level data and validation records in `raw_results/`
+* processed summaries and statistical tests in `processed_results/`
+* benchmark and workload metadata in `benchmarks/benchmark_metadata.csv` and `workloads/workload_metadata.csv`
+* figure provenance in `raw_results/figure_manifest.csv`
+* a human-readable guide in `DATA_DICTIONARY.md`
+* a machine-readable variable dictionary in `DATA_DICTIONARY.csv`
+
+The dataset contains no personally identifiable or confidential information. The `memory_mb` field is blank because memory usage was not collected for the retained runs; blank values must not be interpreted as zero.
+
+Recommended Data Availability Statement:
+
+> The minimal dataset supporting the central findings of this study, including benchmark fixtures, retained raw results, processed outputs, statistical analysis scripts, and figure-generation scripts, is publicly available in the GitHub reproducibility repository and archived on Zenodo.
+
 
 ## Run the Smoke Test
 
