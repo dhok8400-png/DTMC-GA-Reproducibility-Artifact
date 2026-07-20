@@ -27,4 +27,5 @@ fitness_weights:
 notes:
   - Phase 3A provides a real executable pipeline on a small demonstration benchmark.
   - Demo outputs must not be used as evidence for large-system performance claims.
-  - Final submission still requires real benchmark traces, Docker/CI verification, public repository, and Zenodo DOI.
+  - The public repository, Zenodo archive, and Docker/CI verification are available for the released fixture-suite artifact.
+  - External large-project runtime traces remain future validation and are not claimed by the current manuscript.
