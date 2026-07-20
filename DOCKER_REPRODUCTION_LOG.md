@@ -3,8 +3,9 @@
 # Docker Reproduction Log - Phase 3C
 
 Original local verification date: 2026-06-29  
-Current public artifact version: `0.3.5-phase3C-zenodo`  
+Current public artifact version: `v0.3.5-phase3C-zenodo`  
 Documentation last updated: 2026-07-20
+
 
 ## Local non-Docker verification performed here
 
