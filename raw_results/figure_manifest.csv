@@ -1,6 +1,10 @@
 figure_id,source_script,input_file,output_file,status,notes
-phase3B_speedup_by_system,scripts/make_figures.py,raw_results/experiment_runs.csv,figures/phase3B_speedup_by_system.pdf,generated,Phase 3B executable benchmark-suite figure
-phase3B_comm_by_system,scripts/make_figures.py,raw_results/experiment_runs.csv,figures/phase3B_communication_by_system.pdf,generated,Phase 3B executable benchmark-suite figure
-phase3B_runtime_validation,scripts/make_figures.py,raw_results/runtime_validation.csv,figures/phase3B_runtime_validation.pdf,generated,Surrogate runtime-validation figure for pipeline regression
-phase3B_ablation,scripts/make_figures.py,raw_results/ablation_results.csv,figures/phase3B_ablation.pdf,generated,Phase 3B ablation sweep
-phase3B_sensitivity_latency,scripts/make_figures.py,raw_results/sensitivity_results.csv,figures/phase3B_sensitivity_latency.pdf,generated,Phase 3B sensitivity sweep
+phase3B_speedup_by_system,scripts/make_figures.py,raw_results/experiment_runs.csv,figures/phase3B_speedup_by_system.pdf,generated,Mean speedup by fixture and algorithm
+phase3B_comm_by_system,scripts/make_figures.py,raw_results/experiment_runs.csv,figures/phase3B_communication_by_system.pdf,generated,Mean communication-overhead ratio by fixture and algorithm
+speedup_by_algorithm,scripts/make_figures.py,raw_results/experiment_runs.csv,figures/speedup_by_algorithm.pdf,generated,Compatibility boxplot of speedup distributions by algorithm
+phase3B_runtime_validation,scripts/make_figures.py,raw_results/runtime_validation.csv,figures/phase3B_runtime_validation.pdf,generated,Predicted versus surrogate measured speedup for pipeline regression
+phase3B_mq_validation,scripts/make_figures.py,raw_results/mq_validation.csv,figures/phase3B_mq_validation.pdf,generated,Speedup-based MQ versus surrogate measured speedup
+phase3B_ablation,scripts/make_figures.py,raw_results/ablation_results.csv,figures/phase3B_ablation.pdf,generated,Mean ablation effect relative to full DTMC-GA
+phase3B_sensitivity_latency,scripts/make_figures.py,raw_results/sensitivity_results.csv,figures/phase3B_sensitivity_latency.pdf,generated,Sensitivity of mean speedup to communication-latency multiplier
+phase3B_module_size_representative,scripts/make_figures.py,processed_results/module_assignments.csv,figures/phase3B_module_size_representative.pdf,generated,"Representative module-size distribution for plugin_platform_24, DTMC-GA, seed 1"
+phase3B_heatmap_representative,scripts/make_figures.py,processed_results/module_assignments.csv; benchmarks/plugin_platform_24/edges.csv,figures/phase3B_heatmap_representative.pdf,generated,"Representative inter-module call-weight matrix for plugin_platform_24, DTMC-GA, seed 1"
