@@ -1,3 +1,5 @@
+> **Current status:** The local environment described below did not have Docker. Docker build/run verification was subsequently completed successfully through GitHub Actions. See `DOCKER_TEST_STATUS.md` for the current release status.
+
 # Docker Reproduction Log - Phase 3C
 
 Date: 2026-06-29
