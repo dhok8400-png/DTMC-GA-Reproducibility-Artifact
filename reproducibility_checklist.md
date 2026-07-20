@@ -1,79 +1,51 @@
-# Reproducibility Checklist
+# Reproducibility and Minimal-Dataset Checklist
 
-## Required before final journal submission
+Last reviewed: 2026-07-20
 
-- [ ] Public GitHub/GitLab repository created.
-- [ ] Release tag created, e.g., `v1.0-submission`.
-- [ ] Zenodo DOI created and inserted into the manuscript.
-- [ ] `raw_results/experiment_runs.csv` contains all 30 runs per stochastic method.
-- [ ] No best-run filtering is used.
-- [ ] Hardware, OS, compiler, build flags, and profiler are documented.
-- [ ] Benchmark metadata table is complete.
-- [ ] Workload metadata table is complete.
-- [ ] Runtime validation compares predicted and measured speedup.
-- [ ] DTMC validation compares static/dynamic call frequencies and visit counts.
-- [ ] MQ validation compares MQ with measured speedup and traditional metrics.
-- [ ] Ablation results include all planned method variants.
-- [ ] Sensitivity results include latency, bandwidth, module count, GA parameters, and workload profiles.
-- [ ] Statistical scripts regenerate all result tables.
-- [ ] Figure scripts regenerate all figures.
-- [ ] Docker image builds successfully.
-- [ ] README reproduction instructions tested on a clean machine.
-- [ ] Manuscript captions no longer mark final values as provisional.
+## Public availability
 
+- [x] Public GitHub repository is available.
+- [x] A tagged GitHub release is available (`v0.3.5-phase3C-zenodo`).
+- [x] A Zenodo archival DOI is provided (`10.5281/zenodo.21045304`).
+- [x] The corrected manuscript Data Availability Statement identifies both the GitHub repository and Zenodo archive.
+- [x] The corrected manuscript Code Availability Statement identifies both the GitHub repository and Zenodo archive.
 
-## Phase 3B benchmark-suite reproducibility checklist
+## Minimal dataset
 
-- [x] README paths synchronized with actual `raw_results/` layout.
-- [x] Invalid placeholder repository/DOI fields removed from CITATION.cff; public repository URL and Zenodo DOI remain pending until archival.
-- [x] Schema-only analysis scripts produce explicit not-run reports instead of failing.
-- [x] `scripts/smoke_test.sh` added for local/CI smoke checks.
-- [x] Dockerfile retained with explicit local/CI verification commands.
-- [ ] Docker build/run verified on a machine with Docker available.
-- [ ] Final raw results added and all provisional manuscript values regenerated.
+- [x] `raw_results/experiment_runs.csv` contains 750 retained runs: 5 fixtures x 5 algorithms x 30 seeds.
+- [x] All seed-level runs are retained; no best-run filtering is used.
+- [x] Runtime-surrogate validation records are included.
+- [x] DTMC validation records are included.
+- [x] MQ validation records are included.
+- [x] Ablation records are included.
+- [x] Sensitivity records are included.
+- [x] Per-generation optimization logs are included where generated.
+- [x] Benchmark and workload metadata are included.
+- [x] A machine-readable and human-readable data dictionary is included.
+- [x] Figure provenance is listed in `raw_results/figure_manifest.csv`.
 
+## Reproducible analysis
 
-## Phase 3B checks
+- [x] Statistical scripts regenerate descriptive summaries and statistical tests.
+- [x] Figure scripts regenerate the released figures.
+- [x] Source code and configuration files are included.
+- [x] Docker configuration is included.
+- [x] GitHub Actions verification, including Docker build/run, has passed.
+- [x] README reproduction commands are provided.
+- [x] Integrity checks verify row counts, fixture/algorithm/seed coverage, duplicate absence, outputs, and figures.
 
-- [x] Local benchmark-suite fixtures are included under `benchmarks/`.
-- [x] `scripts/run_benchmark_suite.sh` regenerates raw results for all included fixtures.
-- [x] Raw results retain all 30 seeds for every stochastic algorithm; no best-run filtering is used.
-- [x] Statistical summaries and tests are regenerated from raw CSV files.
-- [x] Full-quality PNG/PDF figures are regenerated from raw results.
-- [ ] Docker build/run must be verified on a local machine or CI runner before final submission.
-- [ ] Final large third-party project results must replace fixture-only evidence before making industrial benchmark claims.
-- [ ] GitHub URL and Zenodo DOI must be inserted before submission.
+## Privacy and scope
 
+- [x] The dataset contains no names, email addresses, account identifiers, patient information, or other personally identifiable information.
+- [x] The dataset contains no confidential third-party project traces.
+- [x] The evidence is explicitly limited to the included local executable fixture suite.
+- [x] The artifact does not claim external large-project runtime validation.
+- [x] Blank `memory_mb` values are documented as “not collected,” rather than interpreted as zero.
 
-## Phase 3B-hotfix checks
+## Before sending the editor response
 
-- [x] README wording updated from demo-only/eight-class language to local executable benchmark-suite language.
-- [x] `scripts/smoke_test.sh` completion message updated to Phase 3B.
-- [x] `CITATION.cff` version updated to `0.3.1-phase3B-hotfix`.
-- [x] Invalid placeholder repository/DOI fields removed from `CITATION.cff`; final public URL and Zenodo DOI remain pending.
-- [x] No new manuscript tables or figures were added during this hotfix, keeping the PDF page count suitable for journal submission.
-
-
-## Phase 3B-hotfix3 consistency checks
-
-- [x] `CITATION.cff` version and message updated to `0.3.3-phase3B-hotfix3`.
-- [x] `DOCKER_TEST_STATUS.md` heading and note updated to Phase 3B-hotfix3.
-- [x] No manuscript tables or figures were added in this consistency hotfix; page count is preserved.
-- [x] Raw results remain unchanged: 750 retained rows = 5 fixtures x 5 algorithms x 30 seeds.
-- [ ] Docker build/run remains pending until tested on a Docker-enabled local machine or CI runner.
-
-## Phase 3C Docker/CI readiness checks
-
-- [x] Self-contained Dockerfile added; the artifact is copied into the image at build time.
-- [x] Docker default command runs `scripts/phase3c_ci_verify.sh`.
-- [x] `.dockerignore` added to keep image build context clean.
-- [x] GitHub Actions workflow added at `.github/workflows/artifact-ci.yml`.
-- [x] `scripts/verify_phase3b_integrity.py` added for row-count, fixture/algorithm/seed coverage, duplicate, output, and figure checks.
-- [x] `scripts/phase3c_ci_verify.sh` added for lightweight local/CI verification.
-- [x] Non-Docker equivalent checks passed in the current environment.
-- [x] `DOCKER_REPRODUCTION_LOG.md` added.
-- [ ] Docker build/run remains pending until tested on a Docker-enabled local machine or CI runner.
-- [ ] GitHub Actions workflow must pass after the repository is published.
-- [ ] Zenodo DOI must be inserted after repository archival.
-
-Historical note: earlier Phase 3B-hotfix checklist entries refer to intermediate artifact versions such as `0.3.1-phase3B-hotfix`. The current Phase 3C artifact version is recorded in `CITATION.cff` as `0.3.4-phase3C-ci-ready`.
+- [ ] Upload all documentation corrections to the public GitHub repository.
+- [ ] Create a new GitHub release for the corrected artifact.
+- [ ] Update the Zenodo record with the corrected artifact package.
+- [ ] If Zenodo assigns a new version-specific DOI, replace the DOI in `CITATION.cff`, `README.md`, and the manuscript before submission.
+- [ ] Confirm that the final public and archived packages match the manuscript statement exactly.
