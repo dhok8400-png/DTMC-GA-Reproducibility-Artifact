@@ -1,6 +1,7 @@
 cff-version: 1.2.0
 title: "DTMC-GA Modularization Reproducibility Artifact"
 version: "0.3.6-mdpi-data-availability"
+doi: 10.5281/zenodo.21457470
 repository-code: "https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact"
 message: "Please cite the associated manuscript and this archived reproducibility artifact. The artifact contains source code, local executable benchmark fixtures, retained raw results, processed outputs, statistical and figure-generation scripts, Docker configuration, and the GitHub Actions verification workflow. The public repository and Zenodo DOI are provided in this citation file."
 authors:
