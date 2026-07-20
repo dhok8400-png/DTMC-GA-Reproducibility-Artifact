@@ -1,7 +1,6 @@
 cff-version: 1.2.0
 title: "DTMC-GA Modularization Reproducibility Artifact"
-version: "0.3.5-phase3C-zenodo"
-doi: 10.5281/zenodo.21045304
+version: "0.3.6-mdpi-data-availability"
 repository-code: "https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact"
 message: "Please cite the associated manuscript and this archived reproducibility artifact. The artifact contains source code, local executable benchmark fixtures, retained raw results, processed outputs, statistical and figure-generation scripts, Docker configuration, and the GitHub Actions verification workflow. The public repository and Zenodo DOI are provided in this citation file."
 authors:
@@ -9,7 +8,7 @@ authors:
     given-names: "Kamran Adil"
 abstract: "Phase 3C CI-ready executable benchmark-suite artifact with local CSV benchmark fixtures, retained raw results, statistical scripts, figure-generation scripts, a self-contained Dockerfile, and GitHub Actions workflow for artifact verification. The included results are generated from artifact fixtures and are not final third-party large-project runtime evidence."
 license: "MIT"
-date-released: "2026-06-29"
+date-released: "2026-07-20"
 
 keywords:
   - DTMC
