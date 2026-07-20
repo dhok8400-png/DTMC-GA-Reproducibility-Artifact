@@ -7,15 +7,15 @@ This repository contains the public Phase 3C/Phase 5A reproducibility artifact f
 **“DTMC-GA-Based Modularization for Automated Parallelization of Sequential Software”**
 
 * GitHub repository: https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact
-* Zenodo DOI: 10.5281/zenodo.21045304
-* GitHub release: `v0.3.5-phase3C-zenodo`
+* Zenodo archive: A version-specific DOI will be assigned automatically after this release is published.
+* GitHub release: `v0.3.6-mdpi-data-availability`
 * Docker/CI verification status: **PASSED**
 
 GitHub Actions successfully completed the Phase 3C Artifact Verification workflow, including Python smoke/integrity checks and Docker build/run verification.
 
-The released artifact includes source code, benchmark fixtures, retained raw results, statistical scripts, generated figures, Docker configuration, and the GitHub Actions CI workflow.
+The artifact includes source code, benchmark fixtures, retained raw results, processed results, statistical scripts, generated figures, Docker configuration, and the GitHub Actions CI workflow.
 
-**Important:** the quantitative evidence in this artifact is based on the local executable benchmark-suite with five fixtures and 750 retained runs. It is not presented as external large-project runtime evidence for Chromium, Firefox, MySQL, OpenCV, Unreal, Godot, or ITK. Those external large-project traces are left for future validation.
+**Important:** The quantitative evidence in this artifact is based on the local executable benchmark suite with five fixtures and 750 retained runs. It is not presented as external large-project runtime evidence for Chromium, Firefox, MySQL, OpenCV, Unreal, Godot, or ITK. Those external large-project traces are left for future validation.
 
 ## Included Implementation Modules
 
@@ -67,6 +67,7 @@ Additional validation and analysis files include:
 Processed outputs are stored in `processed_results/`.
 
 Generated figures are stored in `figures/`.
+
 ## Minimal Dataset and Metadata
 
 The repository contains the essential data needed to support and verify the central fixture-suite findings:
@@ -78,12 +79,13 @@ The repository contains the essential data needed to support and verify the cent
 * a human-readable guide in `DATA_DICTIONARY.md`
 * a machine-readable variable dictionary in `DATA_DICTIONARY.csv`
 
-The dataset contains no personally identifiable or confidential information. The `memory_mb` field is blank because memory usage was not collected for the retained runs; blank values must not be interpreted as zero.
+The dataset contains no personally identifiable, confidential, patient, account, or proprietary third-party information.
 
-Recommended Data Availability Statement:
+The `memory_mb` field is blank because memory usage was not collected for the retained runs. Blank values must not be interpreted as zero.
 
-> The minimal dataset supporting the central findings of this study, including benchmark fixtures, retained raw results, processed outputs, statistical analysis scripts, and figure-generation scripts, is publicly available in the GitHub reproducibility repository and archived on Zenodo.
+### Recommended Data Availability Statement
 
+> The minimal dataset supporting the central findings of this study, including benchmark fixtures, retained raw results, processed outputs, statistical analysis scripts, and figure-generation scripts, is publicly available in the GitHub reproducibility repository and will be archived on Zenodo upon publication of this release.
 
 ## Run the Smoke Test
 
@@ -97,7 +99,7 @@ bash scripts/smoke_test.sh
 bash scripts/phase3c_ci_verify.sh
 ```
 
-This script checks the packaged artifact outputs, including raw result integrity, fixture/algorithm/seed coverage, duplicate detection, processed outputs, and generated figures.
+This script checks the packaged artifact outputs, including raw-result integrity, fixture/algorithm/seed coverage, duplicate detection, processed outputs, and generated figures.
 
 ## Run the Demo Experiment Pipeline
 
@@ -105,7 +107,15 @@ This script checks the packaged artifact outputs, including raw result integrity
 bash scripts/run_demo_experiments.sh
 ```
 
-This regenerates the small demo benchmark outputs and writes results to `raw_results/`, `processed_results/`, and `figures/`.
+This runs the small demonstration benchmark in an isolated temporary copy and writes demo-only outputs to `demo_outputs/`.
+
+It does not modify the retained manuscript evidence in:
+
+* `raw_results/`
+* `processed_results/`
+* `figures/`
+
+The demo outputs are not the retained 750-run manuscript evidence.
 
 ## Run the Full Local Benchmark-Suite Pipeline
 
@@ -113,7 +123,7 @@ This regenerates the small demo benchmark outputs and writes results to `raw_res
 bash scripts/run_benchmark_suite.sh
 ```
 
-This regenerates retained raw results for all five local benchmark fixtures.
+This regenerates the retained raw results for all five local benchmark fixtures and preserves provenance records for all nine generated figures.
 
 ## Docker Verification
 
@@ -125,13 +135,13 @@ Build the Docker image:
 docker build -f docker/Dockerfile -t dtmc-ga-artifact:phase3c .
 ```
 
-Run the verification inside Docker:
+Run verification inside Docker:
 
 ```bash
 docker run --rm dtmc-ga-artifact:phase3c
 ```
 
-The GitHub Actions workflow already completed the Phase 3C Artifact Verification workflow successfully, including Docker build/run verification.
+The GitHub Actions workflow successfully completed the Phase 3C Artifact Verification workflow, including Docker build/run verification.
 
 ## GitHub Actions CI
 
@@ -144,32 +154,38 @@ The CI workflow is located at:
 It performs:
 
 * Python dependency installation
-* smoke/integrity checks
+* smoke and integrity checks
 * Phase 3C artifact verification
 * Docker image build
 * Docker-based packaged-output verification
 
 ## Reproducibility Scope
 
-This artifact supports the reproducible evidence reported in the manuscript for the local executable benchmark-suite.
+This artifact supports the reproducible evidence reported in the manuscript for the local executable benchmark suite.
 
-Included evidence:
+### Included evidence
 
 * source code
 * benchmark fixtures
-* raw results
+* retained raw results
 * processed results
 * statistical scripts
 * generated figures
+* figure-provenance documentation
+* human-readable and machine-readable data dictionaries
 * Docker configuration
 * GitHub Actions CI workflow
-* Zenodo archival DOI
+* Zenodo archival record, with the version-specific DOI assigned after release publication
 
-Not included as final evidence:
+### Not included as final evidence
 
 * external Chromium runtime traces
 * external Firefox runtime traces
 * external MySQL runtime traces
+* external OpenCV runtime traces
+* external Unreal runtime traces
+* external Godot runtime traces
+* external ITK runtime traces
 * other full large-project runtime measurements
 
 Those large-system studies are treated as future external validation.
@@ -178,14 +194,10 @@ Those large-system studies are treated as future external validation.
 
 Please cite the associated manuscript and the archived reproducibility artifact.
 
-Artifact DOI:
+### Zenodo Archive
 
-```text
-10.5281/zenodo.21045304
-```
+A version-specific Zenodo DOI will be added here after Zenodo archives the `v0.3.6-mdpi-data-availability` GitHub release.
 
-GitHub repository:
+### GitHub Repository
 
-```text
 https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact
-```
