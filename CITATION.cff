@@ -3,7 +3,7 @@ title: "DTMC-GA Modularization Reproducibility Artifact"
 version: "0.3.5-phase3C-zenodo"
 doi: 10.5281/zenodo.21045304
 repository-code: "https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact"
-message: "Please cite the associated manuscript. This Phase 3C artifact contains local executable benchmark-suite evidence, retained raw results, Dockerfile improvements, and GitHub Actions CI verification workflow. A public repository URL and Zenodo DOI remain pending and must be inserted after archival and before final journal submission."
+message: "Please cite the associated manuscript and this archived reproducibility artifact. The artifact contains source code, local executable benchmark fixtures, retained raw results, processed outputs, statistical and figure-generation scripts, Docker configuration, and the GitHub Actions verification workflow. The public repository and Zenodo DOI are provided in this citation file."
 authors:
   - family-names: "Ibrahim"
     given-names: "Kamran Adil"
