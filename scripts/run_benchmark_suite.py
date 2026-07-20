@@ -155,11 +155,85 @@ def main():
     pd.DataFrame(all_ablation).to_csv(raw/'ablation_results.csv', index=False)
     pd.DataFrame(all_sens).to_csv(raw/'sensitivity_results.csv', index=False)
     pd.DataFrame(all_assign).to_csv(proc/'module_assignments.csv', index=False)
-    pd.DataFrame([{'figure_id':'phase3B_speedup_by_system','source_script':'scripts/make_figures.py','input_file':'raw_results/experiment_runs.csv','output_file':'figures/phase3B_speedup_by_system.pdf','status':'generated','notes':'Phase 3B executable benchmark-suite figure'},
-                  {'figure_id':'phase3B_comm_by_system','source_script':'scripts/make_figures.py','input_file':'raw_results/experiment_runs.csv','output_file':'figures/phase3B_communication_by_system.pdf','status':'generated','notes':'Phase 3B executable benchmark-suite figure'},
-                  {'figure_id':'phase3B_runtime_validation','source_script':'scripts/make_figures.py','input_file':'raw_results/runtime_validation.csv','output_file':'figures/phase3B_runtime_validation.pdf','status':'generated','notes':'Surrogate runtime-validation figure for pipeline regression'},
-                  {'figure_id':'phase3B_ablation','source_script':'scripts/make_figures.py','input_file':'raw_results/ablation_results.csv','output_file':'figures/phase3B_ablation.pdf','status':'generated','notes':'Phase 3B ablation sweep'},
-                  {'figure_id':'phase3B_sensitivity_latency','source_script':'scripts/make_figures.py','input_file':'raw_results/sensitivity_results.csv','output_file':'figures/phase3B_sensitivity_latency.pdf','status':'generated','notes':'Phase 3B sensitivity sweep'}]).to_csv(raw/'figure_manifest.csv', index=False)
+       figure_manifest = [
+        {
+            'figure_id': 'phase3B_speedup_by_system',
+            'source_script': 'scripts/make_figures.py',
+            'input_file': 'raw_results/experiment_runs.csv',
+            'output_file': 'figures/phase3B_speedup_by_system.pdf',
+            'status': 'generated',
+            'notes': 'Mean speedup by fixture and algorithm',
+        },
+        {
+            'figure_id': 'phase3B_comm_by_system',
+            'source_script': 'scripts/make_figures.py',
+            'input_file': 'raw_results/experiment_runs.csv',
+            'output_file': 'figures/phase3B_communication_by_system.pdf',
+            'status': 'generated',
+            'notes': 'Mean communication-overhead ratio by fixture and algorithm',
+        },
+        {
+            'figure_id': 'speedup_by_algorithm',
+            'source_script': 'scripts/make_figures.py',
+            'input_file': 'raw_results/experiment_runs.csv',
+            'output_file': 'figures/speedup_by_algorithm.pdf',
+            'status': 'generated',
+            'notes': 'Compatibility boxplot of speedup distributions by algorithm',
+        },
+        {
+            'figure_id': 'phase3B_runtime_validation',
+            'source_script': 'scripts/make_figures.py',
+            'input_file': 'raw_results/runtime_validation.csv',
+            'output_file': 'figures/phase3B_runtime_validation.pdf',
+            'status': 'generated',
+            'notes': 'Predicted versus surrogate measured speedup for pipeline regression',
+        },
+        {
+            'figure_id': 'phase3B_mq_validation',
+            'source_script': 'scripts/make_figures.py',
+            'input_file': 'raw_results/mq_validation.csv',
+            'output_file': 'figures/phase3B_mq_validation.pdf',
+            'status': 'generated',
+            'notes': 'Speedup-based MQ versus surrogate measured speedup',
+        },
+        {
+            'figure_id': 'phase3B_ablation',
+            'source_script': 'scripts/make_figures.py',
+            'input_file': 'raw_results/ablation_results.csv',
+            'output_file': 'figures/phase3B_ablation.pdf',
+            'status': 'generated',
+            'notes': 'Mean ablation effect relative to full DTMC-GA',
+        },
+        {
+            'figure_id': 'phase3B_sensitivity_latency',
+            'source_script': 'scripts/make_figures.py',
+            'input_file': 'raw_results/sensitivity_results.csv',
+            'output_file': 'figures/phase3B_sensitivity_latency.pdf',
+            'status': 'generated',
+            'notes': 'Sensitivity of mean speedup to communication-latency multiplier',
+        },
+        {
+            'figure_id': 'phase3B_module_size_representative',
+            'source_script': 'scripts/make_figures.py',
+            'input_file': 'processed_results/module_assignments.csv',
+            'output_file': 'figures/phase3B_module_size_representative.pdf',
+            'status': 'generated',
+            'notes': 'Representative module-size distribution for plugin_platform_24, DTMC-GA, seed 1',
+        },
+        {
+            'figure_id': 'phase3B_heatmap_representative',
+            'source_script': 'scripts/make_figures.py',
+            'input_file': 'processed_results/module_assignments.csv; benchmarks/plugin_platform_24/edges.csv',
+            'output_file': 'figures/phase3B_heatmap_representative.pdf',
+            'status': 'generated',
+            'notes': 'Representative inter-module call-weight matrix for plugin_platform_24, DTMC-GA, seed 1',
+        },
+    ]
+    pd.DataFrame(figure_manifest).to_csv(
+        raw/'figure_manifest.csv',
+        index=False
+    )
+
     validate_experiment_runs(raw/'experiment_runs.csv')
     (proc/'phase3B_benchmark_suite_manifest.json').write_text(json.dumps({**manifest,'rows_experiment_runs':len(all_runs),'rows_per_generation':len(all_gen)}, indent=2), encoding='utf-8')
     print(f'Phase 3B generated {len(all_runs)} experiment rows across {len(systems)} systems in {raw}')
