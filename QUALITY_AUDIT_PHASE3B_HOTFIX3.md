@@ -1,41 +1,71 @@
+> **Historical document:** This audit records an intermediate pre-publication state. The public GitHub repository, Zenodo DOI, and GitHub Actions Docker/CI verification were subsequently completed. See `README.md`, `DOCKER_TEST_STATUS.md`, and `reproducibility_checklist.md` for the current status.
+
 # QUALITY AUDIT - Phase 3B-hotfix3
 
 ## Scope
-Phase 3B-hotfix3 is a consistency-only cleanup after Phase 3B-hotfix2. It does not add manuscript tables, manuscript figures, or new experimental claims. The aim is to make the reproducibility artifact metadata consistent before Docker/GitHub/Zenodo work.
+
+Phase 3B-hotfix3 is a consistency-only cleanup after Phase 3B-hotfix2. It does not add manuscript tables, manuscript figures, or new experimental claims. The aim was to make the reproducibility artifact metadata consistent before Docker, GitHub, and Zenodo archival work.
 
 ## Changes made
-- Updated `DTMC-GA-Reproducibility-Artifact/CITATION.cff`:
+
+- Updated `CITATION.cff`:
   - version set to `0.3.3-phase3B-hotfix3`.
-  - message and abstract now explicitly describe the artifact as Phase 3B-hotfix3 local executable benchmark-suite evidence.
-  - public repository URL and Zenodo DOI remain pending until archival before final submission.
-- Updated `DTMC-GA-Reproducibility-Artifact/DOCKER_TEST_STATUS.md`:
+  - message and abstract explicitly described the artifact as Phase 3B-hotfix3 local executable benchmark-suite evidence.
+  - at that intermediate stage, the public repository URL and Zenodo DOI were still pending.
+
+- Updated `DOCKER_TEST_STATUS.md`:
   - heading changed to Phase 3B-hotfix3.
-  - note clarified that Docker build/run is still pending because Docker is unavailable in this execution environment.
-- Updated `DTMC-GA-Reproducibility-Artifact/reproducibility_checklist.md`:
+  - the historical note recorded that Docker build/run had not yet been performed in the original execution environment.
+
+- Updated `reproducibility_checklist.md`:
   - added Phase 3B-hotfix3 consistency checks.
-  - preserved the warning that Docker must be verified on a Docker-enabled local machine or CI runner.
+  - recorded the remaining Docker, GitHub, and Zenodo tasks at that stage.
 
 ## Verification performed
+
 - `scripts/smoke_test.sh`: passed.
 - `pytest -q`: 3 passed.
-- Raw result integrity:
+- Raw-result integrity:
   - `raw_results/experiment_runs.csv`: 750 rows.
   - fixtures: 5.
   - algorithms: 5.
   - seeds per fixture/algorithm: 30.
   - duplicate `system/algorithm/seed` records: 0.
-- PDF compile: passed.
-- PDF render: 33 pages.
+- PDF compilation: passed.
+- PDF rendering: 33 pages.
 - Placeholder check in rendered PDF text: no `Journal Not Specified`, DOI placeholder, `??`, `[?]`, or `A A Phase` detected.
 
 ## Page count and journal suitability
-- Page count remains 33 pages.
-- No new manuscript figure/table was added in this hotfix.
-- The package remains lightweight; final submission-size checks should still be repeated after GitHub/Zenodo archival and any external evidence additions.
 
-## Remaining items before full 9/10 final submission
-- Docker build/run must be verified on local/CI.
-- Public GitHub repository must be created.
-- Zenodo DOI must be generated and inserted into manuscript/Data-Code Availability/CITATION metadata.
-- If large-project claims are retained, external third-party project runtime traces must be added; otherwise the manuscript should remain clearly framed as a local executable benchmark-fixture study.
-- Minor LaTeX overfull/underfull box messages remain; they are not fatal but should be reviewed during final typography polishing.
+- Page count remained 33 pages at this historical stage.
+- No new manuscript figure or table was added in this hotfix.
+- The package remained lightweight.
+
+## Historical remaining items
+
+At the time of this audit, the following items were still pending:
+
+- Docker build/run verification.
+- Creation of the public GitHub repository.
+- Zenodo archival and DOI assignment.
+- Synchronization of the manuscript Data and Code Availability Statements.
+- Final clarification that the evidence is limited to the included local executable benchmark fixtures.
+- Minor LaTeX typography review.
+
+## Current resolution
+
+The items listed above were subsequently addressed:
+
+- the GitHub repository is public;
+- the Zenodo DOI is available;
+- Docker build/run verification passed through GitHub Actions;
+- the minimal dataset, metadata, data dictionaries, and figure-provenance documentation are publicly available;
+- the manuscript and repository documentation now describe the evidence scope consistently.
+
+For the current status, consult:
+
+- `README.md`
+- `DOCKER_TEST_STATUS.md`
+- `DOCKER_REPRODUCTION_LOG.md`
+- `reproducibility_checklist.md`
+- `MDPI_DATA_AVAILABILITY_CHANGELOG.md`
