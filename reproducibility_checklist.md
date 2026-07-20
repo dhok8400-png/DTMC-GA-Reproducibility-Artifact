@@ -2,18 +2,21 @@
 
 Last reviewed: 2026-07-20
 
-## Public availability
+## Public Availability
 
 - [x] The public GitHub repository is available.
 - [x] Documentation corrections have been uploaded to the `main` branch.
-- [x] The artifact is prepared for release as `v0.3.6-mdpi-data-availability`.
-- [ ] The `v0.3.6-mdpi-data-availability` GitHub release has been published.
-- [ ] Zenodo has archived the new GitHub release and assigned its version-specific DOI.
-- [ ] The new Zenodo DOI has been added to `CITATION.cff`, `README.md`, and the final manuscript.
+- [x] The artifact was prepared for release as `v0.3.6-mdpi-data-availability`.
+- [x] The `v0.3.6-mdpi-data-availability` GitHub release has been published.
+- [x] Zenodo successfully archived the new GitHub release.
+- [x] Zenodo assigned the version-specific DOI `10.5281/zenodo.21457470`.
+- [x] The new Zenodo DOI has been added to `CITATION.cff`.
+- [x] The new Zenodo DOI has been added to `README.md`.
+- [ ] The new Zenodo DOI has been added to the final manuscript.
 - [ ] The final Data Availability Statement identifies both the GitHub repository and the new Zenodo archive.
 - [ ] The final Code Availability Statement identifies both the GitHub repository and the new Zenodo archive.
 
-## Minimal dataset
+## Minimal Dataset
 
 - [x] `raw_results/experiment_runs.csv` contains 750 retained runs: 5 fixtures × 5 algorithms × 30 seeds.
 - [x] All seed-level runs are retained; no best-run filtering is used.
@@ -28,7 +31,7 @@ Last reviewed: 2026-07-20
 - [x] Variables in `processed_results/module_assignments.csv` are documented.
 - [x] Provenance for all nine generated figures is listed in `raw_results/figure_manifest.csv`.
 
-## Reproducible analysis
+## Reproducible Analysis
 
 - [x] Statistical scripts regenerate descriptive summaries and statistical tests.
 - [x] Figure scripts regenerate the released figures.
@@ -41,7 +44,7 @@ Last reviewed: 2026-07-20
 - [x] README reproduction commands are provided.
 - [x] Integrity checks verify row counts, fixture/algorithm/seed coverage, duplicate absence, outputs, and figures.
 
-## Privacy and scope
+## Privacy and Scope
 
 - [x] The dataset contains no names, email addresses, account identifiers, patient information, or other personally identifiable information.
 - [x] The dataset contains no confidential or proprietary third-party project traces.
@@ -49,13 +52,26 @@ Last reviewed: 2026-07-20
 - [x] The artifact does not claim external large-project runtime validation.
 - [x] Blank `memory_mb` values are documented as “not collected” and are not interpreted as zero.
 
-## Before sending the editor response
+## Published Records
+
+- [x] GitHub release: `v0.3.6-mdpi-data-availability`.
+- [x] Zenodo version-specific DOI: `10.5281/zenodo.21457470`.
+- [x] Previous Zenodo version DOI: `10.5281/zenodo.21045304`.
+- [x] Concept DOI covering all Zenodo versions: `10.5281/zenodo.21045303`.
+- [x] The GitHub repository and Zenodo record are publicly accessible.
+- [x] The Zenodo record is published as open-access software.
+
+## Before Sending the Editor Response
 
 - [x] Upload all source-code, metadata, documentation, and minimal-dataset corrections to the public GitHub repository.
 - [x] Confirm that GitHub Actions passes after the final documentation and code changes.
-- [ ] Publish the `v0.3.6-mdpi-data-availability` GitHub release.
-- [ ] Confirm that Zenodo successfully archives the new release.
-- [ ] Record the new version-specific Zenodo DOI.
-- [ ] Add the new DOI to the repository and manuscript.
-- [ ] Confirm that the final GitHub and Zenodo packages match the manuscript statements.
+- [x] Publish the `v0.3.6-mdpi-data-availability` GitHub release.
+- [x] Confirm that Zenodo successfully archives the new release.
+- [x] Record the new version-specific Zenodo DOI.
+- [x] Add the new DOI to `CITATION.cff` and `README.md`.
+- [ ] Add the new DOI to the final manuscript.
+- [ ] Update the manuscript Data Availability Statement.
+- [ ] Update the manuscript Code Availability Statement.
+- [ ] Confirm whether a metadata-only follow-up release is needed so the archived release snapshot itself contains the assigned DOI.
+- [ ] Confirm that the final GitHub repository, Zenodo archive, and manuscript statements are consistent.
 - [ ] Send the corrected Data Availability response to the MDPI editor.
