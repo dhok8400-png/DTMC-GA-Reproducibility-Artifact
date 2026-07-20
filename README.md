@@ -85,7 +85,7 @@ The `memory_mb` field is blank because memory usage was not collected for the re
 
 ### Recommended Data Availability Statement
 
-> The minimal dataset supporting the central findings of this study, including benchmark fixtures, retained raw results, processed outputs, statistical analysis scripts, and figure-generation scripts, is publicly available in the GitHub reproducibility repository and will be archived on Zenodo upon publication of this release.
+> The minimal dataset supporting the central findings of this study, including benchmark fixtures, retained raw results, processed outputs, statistical analysis scripts, and figure-generation scripts, is publicly available in the GitHub reproducibility repository and archived on Zenodo at DOI: 10.5281/zenodo.21457470.
 
 ## Run the Smoke Test
 
@@ -175,7 +175,7 @@ This artifact supports the reproducible evidence reported in the manuscript for 
 * human-readable and machine-readable data dictionaries
 * Docker configuration
 * GitHub Actions CI workflow
-* Zenodo archival record, with the version-specific DOI assigned after release publication
+* Zenodo archival record: `10.5281/zenodo.21457470`
 
 ### Not included as final evidence
 
@@ -196,7 +196,7 @@ Please cite the associated manuscript and the archived reproducibility artifact.
 
 ### Zenodo Archive
 
-A version-specific Zenodo DOI will be added here after Zenodo archives the `v0.3.6-mdpi-data-availability` GitHub release.
+DOI: https://doi.org/10.5281/zenodo.21457470
 
 ### GitHub Repository
 
