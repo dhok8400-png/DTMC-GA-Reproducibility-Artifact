@@ -1,0 +1,123 @@
+file,variable,data_type,unit,description,allowed_values_or_notes
+raw_results/experiment_runs.csv,system,string,none,Benchmark fixture identifier.,demo_eight_class; layered_services_12; event_pipeline_16; cyclic_workflow_20; plugin_platform_24
+raw_results/experiment_runs.csv,algorithm,string,none,Optimization or modularization method.,DTMC-GA; Bunch; FCA; RandomValidPartition; TraditionalMQ
+raw_results/experiment_runs.csv,seed,integer,none,Independent pseudo-random seed used for the run.,1-30
+raw_results/experiment_runs.csv,run_id,string,none,"Unique run identifier formed from system, algorithm, and seed.",
+raw_results/experiment_runs.csv,modules,integer,count,Number of modules in the generated partition.,positive integer
+raw_results/experiment_runs.csv,speedup,number,ratio,DET-model predicted sequential-to-parallel runtime ratio.,>0
+raw_results/experiment_runs.csv,communication_overhead,number,ratio,Cross-module communication cost divided by modeled sequential runtime.,>=0
+raw_results/experiment_runs.csv,load_balance,number,ratio,Normalized balance score of work across generated modules.,0-1
+raw_results/experiment_runs.csv,mq,number,score,Speedup-oriented modularization-quality objective reported by the evaluator.,
+raw_results/experiment_runs.csv,algorithm_runtime_s,number,seconds,Wall-clock time used by the optimization algorithm in the generation environment.,>=0
+raw_results/experiment_runs.csv,memory_mb,number or blank,megabytes,"Peak memory field. Memory was not collected for the retained fixture-suite runs, so all values are blank and must not be interpreted as zero.",blank in this release
+raw_results/experiment_runs.csv,measured_runtime_s,number,modeled seconds,Surrogate parallel-runtime validation value generated from evaluator output with deterministic seed-dependent noise; not an external measured runtime.,>0
+raw_results/experiment_runs.csv,sequential_runtime_s,number,modeled seconds,Modeled sequential runtime for the benchmark fixture.,>0
+raw_results/experiment_runs.csv,benchmark_type,string,none,Type and provenance of benchmark input.,phase3B_csv_fixture
+raw_results/experiment_runs.csv,measurement_type,string,none,Declares the result-generation and validation mode.,deterministic_model_run_with_surrogate_runtime_validation
+raw_results/experiment_runs.csv,status,string,none,Generation status label.,phase3B_generated
+raw_results/experiment_runs.csv,notes,string,none,Scope note explaining that results come from included fixtures and are not external large-system runtime evidence.,
+raw_results/runtime_validation.csv,system,string,none,Benchmark fixture identifier.,
+raw_results/runtime_validation.csv,algorithm,string,none,Optimization or modularization method.,
+raw_results/runtime_validation.csv,seed,integer,none,Pseudo-random seed.,1-30
+raw_results/runtime_validation.csv,predicted_speedup,number,ratio,Speedup predicted by the DET-inspired evaluator.,>0
+raw_results/runtime_validation.csv,measured_speedup,number,ratio,Surrogate validation speedup calculated from sequential runtime divided by surrogate parallel runtime.,>0
+raw_results/runtime_validation.csv,sequential_runtime_s,number,modeled seconds,Modeled sequential runtime.,>0
+raw_results/runtime_validation.csv,parallel_runtime_s,number,modeled seconds,Surrogate parallel runtime used for pipeline-regression validation; not an external timing measurement.,>0
+raw_results/runtime_validation.csv,error_percent,number,percent,Absolute percentage difference between predicted and surrogate measured speedup.,>=0
+raw_results/runtime_validation.csv,workload_id,string,none,Identifier linking the record to workload metadata.,
+raw_results/runtime_validation.csv,measurement_type,string,none,Validation provenance.,surrogate_validation_for_pipeline_regression
+raw_results/dtmc_validation.csv,system,string,none,Benchmark fixture identifier.,
+raw_results/dtmc_validation.csv,workload_id,string,none,Workload metadata identifier.,
+raw_results/dtmc_validation.csv,class_id,string,none,Class/state identifier in the fixture graph.,
+raw_results/dtmc_validation.csv,static_call_frequency,number,weighted calls,Outgoing static call-weight total for the class.,>=0
+raw_results/dtmc_validation.csv,dynamic_call_frequency,number,weighted calls,Deterministically adjusted dynamic-call surrogate used for validation.,>=0
+raw_results/dtmc_validation.csv,dtmc_expected_visits,number,expected visits,Finite-horizon expected visit count from the DTMC model.,>=0
+raw_results/dtmc_validation.csv,observed_visits,number,simulated visits,Visit count from the simulated trace.,>=0
+raw_results/dtmc_validation.csv,hot_class_rank_static,number,rank,Rank derived from DTMC expected visits; 1 is hottest.,>=1
+raw_results/dtmc_validation.csv,hot_class_rank_dynamic,number,rank,Rank derived from simulated observed visits; 1 is hottest.,>=1
+raw_results/dtmc_validation.csv,measurement_type,string,none,Validation provenance.,finite_horizon_dtmc_vs_simulated_trace
+raw_results/mq_validation.csv,system,string,none,Benchmark fixture identifier.,
+raw_results/mq_validation.csv,algorithm,string,none,Optimization or modularization method.,
+raw_results/mq_validation.csv,seed,integer,none,Pseudo-random seed.,1-30
+raw_results/mq_validation.csv,mq_speedup_based,number,score,Speedup-oriented MQ score used by the study.,
+raw_results/mq_validation.csv,mq_traditional,number,ratio/score,Traditional modularization-quality score.,
+raw_results/mq_validation.csv,coupling,number,ratio,Communication-overhead ratio used as a coupling proxy.,>=0
+raw_results/mq_validation.csv,cohesion,number,ratio/score,Traditional MQ value used as the cohesion-related comparator.,
+raw_results/mq_validation.csv,graph_modularity,number,ratio,Load-balance score used in this validation export.,0-1
+raw_results/mq_validation.csv,measured_speedup,number,ratio,Surrogate validation speedup.,>0
+raw_results/mq_validation.csv,measurement_type,string,none,Validation provenance.,surrogate_validation_for_pipeline_regression
+raw_results/ablation_results.csv,system,string,none,Benchmark fixture identifier.,
+raw_results/ablation_results.csv,variant,string,none,Full method or ablated method variant.,7 defined variants
+raw_results/ablation_results.csv,seed,integer,none,Pseudo-random seed.,1-30
+raw_results/ablation_results.csv,speedup,number,ratio,Variant speedup value.,>0
+raw_results/ablation_results.csv,communication_overhead,number,ratio,Mean communication-overhead ratio for matching seed.,>=0
+raw_results/ablation_results.csv,load_balance,number,ratio,Mean load-balance score for matching seed.,0-1
+raw_results/ablation_results.csv,mq,number,score,Mean MQ score for matching seed.,
+raw_results/ablation_results.csv,algorithm_runtime_s,number,seconds,Mean optimization runtime for matching seed.,>=0
+raw_results/ablation_results.csv,difference_from_full_percent,number,percent,Percentage difference in speedup relative to full DTMC-GA for the same system and seed.,
+raw_results/ablation_results.csv,measurement_type,string,none,Analysis provenance.,phase3B_ablation_model_sweep
+raw_results/sensitivity_results.csv,system,string,none,Benchmark fixture identifier.,
+raw_results/sensitivity_results.csv,parameter,string,none,Parameter varied in the sensitivity sweep.,communication_latency; mutation_rate; number_of_modules
+raw_results/sensitivity_results.csv,parameter_value,number,parameter-specific,"Value used for the selected parameter; latency is a multiplier, mutation rate is a proportion, and module count is a count.",
+raw_results/sensitivity_results.csv,algorithm,string,none,Algorithm evaluated in the sensitivity sweep.,DTMC-GA
+raw_results/sensitivity_results.csv,seed,integer,none,Pseudo-random seed.,1-10
+raw_results/sensitivity_results.csv,speedup,number,ratio,Sensitivity-adjusted speedup.,>0
+raw_results/sensitivity_results.csv,communication_overhead,number,ratio,Mean communication-overhead ratio for matching seed.,>=0
+raw_results/sensitivity_results.csv,load_balance,number,ratio,Mean load-balance score for matching seed.,0-1
+raw_results/sensitivity_results.csv,mq,number,score,Mean MQ score for matching seed.,
+raw_results/sensitivity_results.csv,algorithm_runtime_s,number,seconds,Mean optimization runtime for matching seed.,>=0
+raw_results/sensitivity_results.csv,measurement_type,string,none,Analysis provenance.,phase3B_sensitivity_model_sweep
+raw_results/per_generation_logs.csv,system,string,none,Benchmark fixture identifier.,
+raw_results/per_generation_logs.csv,algorithm,string,none,Stochastic optimization method with a generation log.,DTMC-GA; Bunch
+raw_results/per_generation_logs.csv,seed,integer,none,Pseudo-random seed.,1-30
+raw_results/per_generation_logs.csv,generation,integer,count/index,Zero-based optimization generation index.,0-7
+raw_results/per_generation_logs.csv,best_fitness,number,score,Best fitness observed in the generation.,
+raw_results/per_generation_logs.csv,median_fitness,number,score,Median population fitness in the generation.,
+raw_results/per_generation_logs.csv,diversity,number,ratio,Population diversity metric.,0-1
+raw_results/per_generation_logs.csv,elapsed_s,number,seconds,Cumulative elapsed optimization time at the generation.,>=0
+raw_results/figure_manifest.csv,figure_id,string,none,Stable identifier for a generated figure.,
+raw_results/figure_manifest.csv,source_script,path,none,Script that regenerates the figure.,
+raw_results/figure_manifest.csv,input_file,path(s),none,Raw or processed inputs used to generate the figure.,semicolon separates multiple inputs
+raw_results/figure_manifest.csv,output_file,path,none,Primary PDF output path; a matching PNG is also generated.,
+raw_results/figure_manifest.csv,status,string,none,Figure generation status.,generated
+raw_results/figure_manifest.csv,notes,string,none,Short provenance and interpretation note.,
+benchmarks/benchmark_metadata.csv,system,string,none,Benchmark fixture identifier.,
+benchmarks/benchmark_metadata.csv,version,string,none,Fixture version.,
+benchmarks/benchmark_metadata.csv,source_url,string,none,Source/provenance field for the fixture.,
+benchmarks/benchmark_metadata.csv,license,string,none,License field.,
+benchmarks/benchmark_metadata.csv,full_project_size,string or number,project-specific,Reference project-size field.,
+benchmarks/benchmark_metadata.csv,analyzed_classes,integer,count,Number of classes in the included fixture.,>0
+benchmarks/benchmark_metadata.csv,subsystem,string,none,Included subsystem/fixture description.,
+benchmarks/benchmark_metadata.csv,selection_criterion,string,none,How the fixture scope was selected.,
+benchmarks/benchmark_metadata.csv,build_command,string,none,Command or note for preparing the fixture.,
+benchmarks/benchmark_metadata.csv,commit_hash,string,none,Source revision field when applicable.,
+workloads/workload_metadata.csv,system,string,none,Benchmark fixture identifier.,
+workloads/workload_metadata.csv,workload_id,string,none,Workload identifier.,
+workloads/workload_metadata.csv,description,string,none,Workload description.,
+workloads/workload_metadata.csv,input_dataset,string/path,none,Input dataset or fixture reference.,
+workloads/workload_metadata.csv,command,string,none,Command or procedure for the workload.,
+workloads/workload_metadata.csv,seed,integer,none,Workload seed.,
+workloads/workload_metadata.csv,trace_method,string,none,Trace or simulation method.,
+workloads/workload_metadata.csv,measurement_repetitions,integer,count,Number of repetitions.,>=1
+workloads/workload_metadata.csv,notes,string,none,Additional scope/provenance information.,
+processed_results/summary_statistics.csv,system,string,none,Benchmark fixture identifier.,
+processed_results/summary_statistics.csv,algorithm,string,none,Optimization or modularization method.,
+processed_results/summary_statistics.csv,metric,string,none,Summarized metric.,speedup; communication_overhead; load_balance; mq; algorithm_runtime_s
+processed_results/summary_statistics.csv,count,integer,count,Number of retained observations.,
+processed_results/summary_statistics.csv,mean,number,metric-specific,Arithmetic mean.,
+processed_results/summary_statistics.csv,median,number,metric-specific,Median.,
+processed_results/summary_statistics.csv,sd,number,metric-specific,Sample standard deviation.,
+processed_results/summary_statistics.csv,ci95,number,metric-specific,Half-width of the reported 95% confidence interval.,
+processed_results/summary_statistics.csv,min,number,metric-specific,Minimum.,
+processed_results/summary_statistics.csv,max,number,metric-specific,Maximum.,
+processed_results/statistical_tests.csv,system,string,none,Benchmark fixture or aggregate scope.,
+processed_results/statistical_tests.csv,test,string,none,Statistical test name.,Friedman; Wilcoxon_Bonferroni
+processed_results/statistical_tests.csv,metric,string,none,Metric tested.,speedup
+processed_results/statistical_tests.csv,statistic,number or blank,test-specific,Test statistic.,
+processed_results/statistical_tests.csv,p_value,number or blank,probability,Unadjusted p-value.,0-1
+processed_results/statistical_tests.csv,p_bonferroni,number or blank,probability,Bonferroni-adjusted p-value.,0-1
+processed_results/statistical_tests.csv,rank_biserial,number or blank,effect size,Rank-biserial effect size for pairwise tests.,-1 to 1
+processed_results/statistical_tests.csv,comparison,string or blank,none,Pairwise method comparison.,
+processed_results/statistical_tests.csv,methods,string or blank,none,Methods included in an omnibus test.,
+processed_results/statistical_tests.csv,status,string,none,Execution/result status.,ok; identical; not_run
+processed_results/statistical_tests.csv,notes,string,none,Reason or clarification when a test is not run or values are identical.,
