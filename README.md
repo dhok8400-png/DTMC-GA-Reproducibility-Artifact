@@ -7,7 +7,7 @@ This repository contains the public Phase 3C/Phase 5A reproducibility artifact f
 **“DTMC-GA-Based Modularization for Automated Parallelization of Sequential Software”**
 
 * GitHub repository: https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact
-* Zenodo archive: A version-specific DOI will be assigned automatically after this release is published.
+* Zenodo archive: https://doi.org/10.5281/zenodo.21457470
 * GitHub release: `v0.3.6-mdpi-data-availability`
 * Docker/CI verification status: **PASSED**
 
