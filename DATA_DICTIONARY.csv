@@ -121,3 +121,8 @@ processed_results/statistical_tests.csv,comparison,string or blank,none,Pairwise
 processed_results/statistical_tests.csv,methods,string or blank,none,Methods included in an omnibus test.,
 processed_results/statistical_tests.csv,status,string,none,Execution/result status.,ok; identical; not_run
 processed_results/statistical_tests.csv,notes,string,none,Reason or clarification when a test is not run or values are identical.,
+processed_results/module_assignments.csv,system,string,none,Benchmark fixture identifier.,demo_eight_class; layered_services_12; event_pipeline_16; cyclic_workflow_20; plugin_platform_24
+processed_results/module_assignments.csv,algorithm,string,none,Optimization or modularization method.,DTMC-GA; Bunch; FCA; RandomValidPartition; TraditionalMQ
+processed_results/module_assignments.csv,seed,integer,none,Independent pseudo-random seed used for the generated partition.,1-30
+processed_results/module_assignments.csv,class_id,string,none,Class identifier from the corresponding benchmark fixture.,
+processed_results/module_assignments.csv,module_id,integer,count/index,Module identifier assigned to the class by the selected algorithm.,1-5 in the retained release
