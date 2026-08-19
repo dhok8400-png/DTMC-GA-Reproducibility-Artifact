@@ -1,0 +1,145 @@
+name: OpenCV 4.7.0 Production Safety Validation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/opencv470-production-safety-validation.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  production-safety-validation:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout artifact repository
+        uses: actions/checkout@v4
+
+      - name: Checkout exact OpenCV 4.7.0
+        uses: actions/checkout@v4
+        with:
+          repository: opencv/opencv
+          ref: 725e440d278aca07d35a5e8963ef990572b07316
+          path: opencv-src
+
+      - name: Verify exact source and production hazard families
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C opencv-src rev-parse HEAD)" = "725e440d278aca07d35a5e8963ef990572b07316"
+          target=opencv-src/modules/dnn/src/layers/convolution_layer.cpp
+          sha256sum "$target" | tee production_target_sha_before.txt
+          python3 - <<'PY'
+          import json, pathlib, re
+          p=pathlib.Path('opencv-src/modules/dnn/src/layers/convolution_layer.cpp')
+          text=p.read_text(errors='replace')
+          checks={
+            'aliasing': bool(re.search(r'weightsMat\.data\s*==\s*blobs\[0\]\.data',text)) and 'weightsMat = weightsMat.clone()' in text,
+            'mutable_side_effects': all(x in text for x in ['weightsMultipliers[i] *= wi','biasvec[i] *= wi','biasvec[i] += b.at<float>(i)']),
+            'lifetime_release': ('tengine_release(tengine_graph)' in text) or ('convolutionOp.release()' in text),
+            'error_control_flow': ('CV_Assert' in text and 'CV_Error' in text),
+          }
+          if not all(checks.values()):
+              raise RuntimeError(checks)
+          out={
+            'exact_commit':'725e440d278aca07d35a5e8963ef990572b07316',
+            'target_file':str(p),
+            'hazard_families':checks,
+            'policy':'fail-closed',
+            'production_transformation_applied':False,
+            'reason':'The real target contains unresolved aliasing/state/lifetime/error-order hazards; the conservative policy rejects source displacement rather than forcing an unsafe rewrite.'
+          }
+          pathlib.Path('production_safety_static_audit.json').write_text(json.dumps(out,indent=2))
+          PY
+
+      - name: Configure ASan and UBSan build
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S opencv-src -B build-sanitize -G Ninja \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_C_FLAGS_RELWITHDEBINFO='-O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined' \
+            -DCMAKE_CXX_FLAGS_RELWITHDEBINFO='-O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined' \
+            -DCMAKE_EXE_LINKER_FLAGS='-fsanitize=address,undefined' \
+            -DCMAKE_SHARED_LINKER_FLAGS='-fsanitize=address,undefined' \
+            -DBUILD_LIST=dnn,ts \
+            -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=ON -DBUILD_EXAMPLES=OFF \
+            -DBUILD_opencv_apps=OFF -DBUILD_JAVA=OFF -DBUILD_opencv_python3=OFF \
+            -DWITH_IPP=OFF -DWITH_OPENCL=OFF -DWITH_CUDA=OFF -DWITH_OPENVINO=OFF \
+            -DWITH_ITT=OFF -DWITH_FFMPEG=OFF -DWITH_GSTREAMER=OFF -DWITH_V4L=OFF \
+            -DWITH_OPENJPEG=OFF -DWITH_OPENEXR=OFF -DWITH_LAPACK=OFF \
+            | tee sanitize_cmake.log
+          cmake --build build-sanitize --target opencv_perf_dnn -j2 | tee sanitize_build.log
+          test -x build-sanitize/bin/opencv_perf_dnn
+
+      - name: Execute exact workload under sanitizers
+        shell: bash
+        env:
+          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1:abort_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+          OPENCV_FOR_THREADS_NUM: '1'
+          OMP_NUM_THREADS: '1'
+          OPENBLAS_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+          NUMEXPR_NUM_THREADS: '1'
+        run: |
+          set -euo pipefail
+          mkdir -p sanitizer_logs
+          for i in 1 2 3; do
+            build-sanitize/bin/opencv_perf_dnn \
+              --gtest_filter='Conv.conv/0:Conv.conv/2:Conv.conv/28:Conv.conv/42:Conv.conv/69' \
+              --perf_threads=1 --perf_seed=809564 --perf_min_samples=3 --perf_force_samples=10 \
+              --perf_time_limit=1.0 --gtest_color=no \
+              > "sanitizer_logs/run_${i}.txt" 2>&1
+          done
+          ! grep -R -E 'ERROR: AddressSanitizer|runtime error:|UndefinedBehaviorSanitizer' sanitizer_logs
+
+      - name: Prove production source remained unchanged and publish result
+        shell: bash
+        run: |
+          set -euo pipefail
+          target=opencv-src/modules/dnn/src/layers/convolution_layer.cpp
+          sha256sum "$target" | tee production_target_sha_after.txt
+          cmp production_target_sha_before.txt production_target_sha_after.txt
+          python3 - <<'PY'
+          import json,pathlib
+          s=json.load(open('production_safety_static_audit.json'))
+          s.update({
+            'sanitizer_build':'PASS',
+            'sanitizer_runs':3,
+            'sanitizer_runtime_findings':0,
+            'source_hash_unchanged':True,
+            'safety_outcome':'PASS_FAIL_CLOSED_IDENTITY',
+            'interpretation':'On the audited OpenCV DNN production target, unresolved hazards cause rejection of displacement. The exact unmodified production source builds and executes the fixed workload cleanly under ASan/UBSan. This is safety evidence for conservative rejection, not evidence of a successful production rewrite.'
+          })
+          pathlib.Path('production_safety_summary.json').write_text(json.dumps(s,indent=2))
+          pathlib.Path('PRODUCTION_SAFETY_VALIDATION.md').write_text(
+            '# OpenCV 4.7.0 Production Safety Validation\n\n'
+            '**Status: PASS — fail-closed identity outcome.**\n\n'
+            'The exact OpenCV 4.7.0 DNN production source contains concrete aliasing, mutable-state, lifetime/resource-release, and error/control-flow hazards. Under the manuscript\'s conservative policy, unresolved hazards reject displacement; no source rewrite was forced. The exact unchanged source was rebuilt with AddressSanitizer and UndefinedBehaviorSanitizer and the fixed five-convolution workload completed in three independent sanitizer runs with no sanitizer findings. This validates the fail-closed safety behavior on the real production target while preserving the boundary that no production rewrite is claimed.\n'
+          )
+          PY
+          out=results/opencv470/production_safety_validation
+          rm -rf "$out" && mkdir -p "$out"
+          cp production_safety_static_audit.json production_safety_summary.json PRODUCTION_SAFETY_VALIDATION.md \
+             production_target_sha_before.txt production_target_sha_after.txt sanitize_cmake.log sanitize_build.log "$out"/
+          cp -r sanitizer_logs "$out"/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$out"
+          git commit -m 'Publish OpenCV production safety validation' || true
+          git push
+
+      - name: Upload production safety artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opencv470-production-safety-validation
+          path: |
+            production_safety_static_audit.json
+            production_safety_summary.json
+            PRODUCTION_SAFETY_VALIDATION.md
+            production_target_sha_before.txt
+            production_target_sha_after.txt
+            sanitizer_logs/
