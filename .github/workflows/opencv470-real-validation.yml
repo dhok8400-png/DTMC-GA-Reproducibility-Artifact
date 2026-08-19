@@ -48,7 +48,7 @@ jobs:
         run: |
           cmake -S opencv-src -B build-release -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_LIST=dnn \
+            -DBUILD_LIST=dnn,ts \
             -DBUILD_TESTS=OFF \
             -DBUILD_PERF_TESTS=ON \
             -DBUILD_EXAMPLES=OFF \
@@ -63,6 +63,10 @@ jobs:
             -DWITH_FFMPEG=OFF \
             | tee cmake-release.log
 
+      - name: Verify Release perf target exists
+        run: |
+          ninja -C build-release -t targets | grep -E '^opencv_perf_dnn:' | tee release-target-check.txt
+
       - name: Build clean Release DNN perf target
         run: |
           cmake --build build-release --target opencv_perf_dnn -j2 | tee build-release.log
@@ -73,7 +77,7 @@ jobs:
           cmake -S opencv-src -B build-profile -G Ninja \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_CXX_FLAGS_RELWITHDEBINFO='-O2 -g -fno-omit-frame-pointer' \
-            -DBUILD_LIST=dnn \
+            -DBUILD_LIST=dnn,ts \
             -DBUILD_TESTS=OFF \
             -DBUILD_PERF_TESTS=ON \
             -DBUILD_EXAMPLES=OFF \
@@ -87,6 +91,10 @@ jobs:
             -DWITH_ITT=OFF \
             -DWITH_FFMPEG=OFF \
             | tee cmake-profile.log
+
+      - name: Verify profile perf target exists
+        run: |
+          ninja -C build-profile -t targets | grep -E '^opencv_perf_dnn:' | tee profile-target-check.txt
 
       - name: Build profile DNN perf target
         run: |
@@ -110,5 +118,7 @@ jobs:
             build-release.log
             cmake-profile.log
             build-profile.log
+            release-target-check.txt
+            profile-target-check.txt
             dnn-tests.txt
             convolution-tests.txt
