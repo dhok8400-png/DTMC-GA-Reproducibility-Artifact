@@ -1,0 +1,229 @@
+name: OpenCV 4.7.0 Sequential Baseline
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/opencv470-sequential-baseline.yml'
+
+jobs:
+  sequential-baseline:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout artifact repository
+        uses: actions/checkout@v4
+
+      - name: Checkout exact OpenCV 4.7.0 source
+        uses: actions/checkout@v4
+        with:
+          repository: opencv/opencv
+          ref: 725e440d278aca07d35a5e8963ef990572b07316
+          path: opencv-src
+
+      - name: Verify exact source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C opencv-src rev-parse HEAD | tee opencv470_commit.txt
+          test "$(cat opencv470_commit.txt)" = "725e440d278aca07d35a5e8963ef990572b07316"
+          grep -q 'CV_VERSION_MAJOR    4' opencv-src/modules/core/include/opencv2/core/version.hpp
+          grep -q 'CV_VERSION_MINOR    7' opencv-src/modules/core/include/opencv2/core/version.hpp
+          grep -q 'CV_VERSION_REVISION 0' opencv-src/modules/core/include/opencv2/core/version.hpp
+          sha256sum opencv-src/modules/core/include/opencv2/core/version.hpp | tee opencv470_key_hashes.txt
+          sha256sum opencv-src/modules/dnn/perf/perf_convolution.cpp | tee -a opencv470_key_hashes.txt
+          sha256sum opencv-src/CMakeLists.txt | tee -a opencv470_key_hashes.txt
+
+      - name: Record hosted-runner provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "=== uname ==="
+            uname -a
+            echo "=== lscpu ==="
+            lscpu
+            echo "=== memory ==="
+            free -h
+            echo "=== cmake ==="
+            cmake --version
+            echo "=== ninja ==="
+            ninja --version
+            echo "=== compiler ==="
+            g++ --version
+            echo "=== python ==="
+            python3 --version
+          } | tee runner-provenance.txt
+
+      - name: Configure clean Release build
+        run: |
+          cmake -S opencv-src -B build-release -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_LIST=dnn,ts \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_PERF_TESTS=ON \
+            -DBUILD_EXAMPLES=OFF \
+            -DBUILD_opencv_apps=OFF \
+            -DBUILD_JAVA=OFF \
+            -DBUILD_opencv_python3=OFF \
+            -DWITH_IPP=OFF \
+            -DWITH_OPENCL=OFF \
+            -DWITH_CUDA=OFF \
+            -DWITH_OPENVINO=OFF \
+            -DWITH_ITT=OFF \
+            -DWITH_FFMPEG=OFF \
+            -DWITH_GSTREAMER=OFF \
+            -DWITH_V4L=OFF \
+            -DWITH_OPENJPEG=OFF \
+            -DWITH_OPENEXR=OFF \
+            -DWITH_LAPACK=OFF \
+            | tee cmake-release.log
+
+      - name: Build Release DNN performance target
+        run: |
+          ninja -C build-release -t targets | grep -E '^opencv_perf_dnn:' | tee release-target-check.txt
+          cmake --build build-release --target opencv_perf_dnn -j2 | tee build-release.log
+          test -x build-release/bin/opencv_perf_dnn
+
+      - name: Verify fixed convolution workload
+        shell: bash
+        run: |
+          set -euo pipefail
+          build-release/bin/opencv_perf_dnn --gtest_list_tests > dnn-tests.txt
+          for id in 0 2 28 42 69; do
+            grep -q "conv/${id}" dnn-tests.txt
+          done
+          cat > workload_manifest.txt <<'EOF'
+          Fixed real-OpenCV DNN convolution workload (OpenCV 4.7.0, modules/dnn/perf/perf_convolution.cpp)
+          GTest filter: Conv.conv/0:Conv.conv/2:Conv.conv/28:Conv.conv/42:Conv.conv/69
+          Selection frozen before timing to span distinct official convolution configurations:
+          - conv/0: 7x7 convolution, bias, standard groups
+          - conv/2: high-FLOP 5x5 SAME convolution
+          - conv/28: 5x5 stride-2 SAME convolution
+          - conv/42: 1x1 convolution
+          - conv/69: 3x3 depthwise/grouped convolution (G=1024)
+          Sequential controls: --perf_threads=1 plus OPENCV_FOR_THREADS_NUM=1; process affinity restricted to one CPU where supported.
+          Measurement design: 3 untimed warm-up process runs, then 30 independent timed process runs of the same fixed five-test workload.
+          OpenCV perf defaults retained explicitly: seed=809564, min_samples=10, force_samples=100, time_limit=3.0 s/test.
+          EOF
+          cat workload_manifest.txt
+
+      - name: Warm up and collect 30-run sequential baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p baseline_run_logs
+          python3 - <<'PY'
+          import csv, json, os, pathlib, statistics, subprocess, time
+
+          binary = pathlib.Path('build-release/bin/opencv_perf_dnn')
+          test_filter = 'Conv.conv/0:Conv.conv/2:Conv.conv/28:Conv.conv/42:Conv.conv/69'
+          cmd = [
+              str(binary),
+              f'--gtest_filter={test_filter}',
+              '--perf_threads=1',
+              '--perf_seed=809564',
+              '--perf_min_samples=10',
+              '--perf_force_samples=100',
+              '--perf_time_limit=3.0',
+              '--gtest_color=no',
+          ]
+
+          env = os.environ.copy()
+          env.update({
+              'OPENCV_FOR_THREADS_NUM': '1',
+              'OMP_NUM_THREADS': '1',
+              'OPENBLAS_NUM_THREADS': '1',
+              'MKL_NUM_THREADS': '1',
+              'NUMEXPR_NUM_THREADS': '1',
+          })
+
+          affinity = None
+          if hasattr(os, 'sched_setaffinity'):
+              allowed = sorted(os.sched_getaffinity(0))
+              if not allowed:
+                  raise RuntimeError('No CPUs available in sched_getaffinity')
+              chosen = allowed[0]
+              os.sched_setaffinity(0, {chosen})
+              affinity = sorted(os.sched_getaffinity(0))
+
+          provenance = {
+              'command': cmd,
+              'environment_thread_controls': {k: env[k] for k in [
+                  'OPENCV_FOR_THREADS_NUM','OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','NUMEXPR_NUM_THREADS'
+              ]},
+              'cpu_affinity': affinity,
+              'warmup_runs': 3,
+              'timed_runs': 30,
+              'timer': 'time.perf_counter_ns',
+          }
+          pathlib.Path('baseline_protocol.json').write_text(json.dumps(provenance, indent=2))
+
+          for i in range(1, 4):
+              log = pathlib.Path('baseline_run_logs') / f'warmup_{i:02d}.txt'
+              with log.open('w') as f:
+                  subprocess.run(cmd, env=env, stdout=f, stderr=subprocess.STDOUT, check=True)
+
+          rows = []
+          for i in range(1, 31):
+              log = pathlib.Path('baseline_run_logs') / f'run_{i:02d}.txt'
+              start = time.perf_counter_ns()
+              with log.open('w') as f:
+                  cp = subprocess.run(cmd, env=env, stdout=f, stderr=subprocess.STDOUT)
+              stop = time.perf_counter_ns()
+              elapsed = (stop - start) / 1e9
+              if cp.returncode != 0:
+                  raise RuntimeError(f'Baseline run {i} failed with exit code {cp.returncode}; see {log}')
+              rows.append({'run': i, 'elapsed_seconds': elapsed, 'exit_code': cp.returncode})
+              print(f'run {i:02d}: {elapsed:.6f} s', flush=True)
+
+          with open('baseline_30runs.csv', 'w', newline='') as f:
+              w = csv.DictWriter(f, fieldnames=['run','elapsed_seconds','exit_code'])
+              w.writeheader(); w.writerows(rows)
+
+          values = [r['elapsed_seconds'] for r in rows]
+          mean = statistics.mean(values)
+          median = statistics.median(values)
+          sd = statistics.stdev(values)
+          stats = {
+              'n': len(values),
+              'mean_seconds': mean,
+              'median_seconds': median,
+              'sample_sd_seconds': sd,
+              'min_seconds': min(values),
+              'max_seconds': max(values),
+              'coefficient_of_variation_percent': (sd / mean * 100.0) if mean else None,
+          }
+          pathlib.Path('baseline_summary.json').write_text(json.dumps(stats, indent=2))
+          pathlib.Path('baseline_summary.txt').write_text('\n'.join(f'{k}: {v}' for k,v in stats.items()) + '\n')
+          print(json.dumps(stats, indent=2))
+          PY
+
+      - name: Validate baseline evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(($(wc -l < baseline_30runs.csv)-1))" -eq 30
+          grep -q '"n": 30' baseline_summary.json
+          test "$(find baseline_run_logs -name 'run_*.txt' | wc -l)" -eq 30
+          test "$(find baseline_run_logs -name 'warmup_*.txt' | wc -l)" -eq 3
+          cat baseline_summary.txt
+
+      - name: Upload sequential baseline evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: opencv470-sequential-baseline-30runs
+          path: |
+            opencv470_commit.txt
+            opencv470_key_hashes.txt
+            runner-provenance.txt
+            cmake-release.log
+            build-release.log
+            release-target-check.txt
+            dnn-tests.txt
+            workload_manifest.txt
+            baseline_protocol.json
+            baseline_30runs.csv
+            baseline_summary.json
+            baseline_summary.txt
+            baseline_run_logs/
