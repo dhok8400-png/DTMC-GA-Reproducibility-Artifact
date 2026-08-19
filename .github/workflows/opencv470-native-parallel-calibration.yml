@@ -1,0 +1,197 @@
+name: OpenCV 4.7.0 Native Parallel Calibration
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/opencv470-native-parallel-calibration.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  native-parallel-calibration:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout artifact repository
+        uses: actions/checkout@v4
+
+      - name: Checkout exact OpenCV 4.7.0
+        uses: actions/checkout@v4
+        with:
+          repository: opencv/opencv
+          ref: 725e440d278aca07d35a5e8963ef990572b07316
+          path: opencv-src
+
+      - name: Verify exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C opencv-src rev-parse HEAD)" = "725e440d278aca07d35a5e8963ef990572b07316"
+          grep -q 'CV_VERSION_MAJOR    4' opencv-src/modules/core/include/opencv2/core/version.hpp
+          grep -q 'CV_VERSION_MINOR    7' opencv-src/modules/core/include/opencv2/core/version.hpp
+          grep -q 'CV_VERSION_REVISION 0' opencv-src/modules/core/include/opencv2/core/version.hpp
+
+      - name: Record runner provenance
+        shell: bash
+        run: |
+          {
+            uname -a
+            lscpu
+            free -h
+            cmake --version
+            ninja --version
+            g++ --version
+            python3 --version
+          } > native_runner_provenance.txt
+
+      - name: Configure and build clean Release performance target
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S opencv-src -B build-release -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_LIST=dnn,ts \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_PERF_TESTS=ON \
+            -DBUILD_EXAMPLES=OFF \
+            -DBUILD_opencv_apps=OFF \
+            -DBUILD_JAVA=OFF \
+            -DBUILD_opencv_python3=OFF \
+            -DWITH_IPP=OFF -DWITH_OPENCL=OFF -DWITH_CUDA=OFF \
+            -DWITH_OPENVINO=OFF -DWITH_ITT=OFF -DWITH_FFMPEG=OFF \
+            -DWITH_GSTREAMER=OFF -DWITH_V4L=OFF -DWITH_OPENJPEG=OFF \
+            -DWITH_OPENEXR=OFF -DWITH_LAPACK=OFF \
+            | tee native_cmake_release.log
+          cmake --build build-release --target opencv_perf_dnn -j2 | tee native_build_release.log
+          test -x build-release/bin/opencv_perf_dnn
+
+      - name: Verify fixed workload
+        shell: bash
+        run: |
+          set -euo pipefail
+          build-release/bin/opencv_perf_dnn --gtest_list_tests > native_dnn_tests.txt
+          for id in 0 2 28 42 69; do grep -q "conv/${id}" native_dnn_tests.txt; done
+
+      - name: Run matched 1-thread and native-parallel calibration
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p native_parallel_logs
+          python3 - <<'PY'
+          import csv, json, os, pathlib, random, statistics, subprocess, time
+
+          binary = pathlib.Path('build-release/bin/opencv_perf_dnn')
+          filt = 'Conv.conv/0:Conv.conv/2:Conv.conv/28:Conv.conv/42:Conv.conv/69'
+          allowed = sorted(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else list(range(os.cpu_count() or 1))
+          if len(allowed) < 2:
+              raise RuntimeError('Parallel calibration requires at least two CPUs')
+          p = min(4, len(allowed))
+          one_set = str(allowed[0])
+          par_set = ','.join(str(x) for x in allowed[:p])
+
+          def command(threads, cpuset):
+              return ['taskset','-c',cpuset,str(binary),f'--gtest_filter={filt}',
+                      f'--perf_threads={threads}','--perf_seed=809564','--perf_min_samples=10',
+                      '--perf_force_samples=100','--perf_time_limit=3.0','--gtest_color=no']
+
+          def env_for(threads):
+              env = os.environ.copy()
+              env['OPENCV_FOR_THREADS_NUM'] = str(threads)
+              # Keep external numerical libraries serial so the comparison isolates OpenCV's native parallelism.
+              for k in ['OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','NUMEXPR_NUM_THREADS']:
+                  env[k] = '1'
+              return env
+
+          configs = {'T1': (1, one_set), 'TP': (p, par_set)}
+          protocol = {
+              'exact_opencv_commit':'725e440d278aca07d35a5e8963ef990572b07316',
+              'workload':filt,
+              'warmups_per_configuration':3,
+              'timed_runs_per_configuration':30,
+              'parallel_threads':p,
+              'one_thread_cpuset':one_set,
+              'parallel_cpuset':par_set,
+              'measurement':'process wall-clock via time.perf_counter_ns',
+              'interpretation':'Native OpenCV threaded execution is an external runtime-calibration checkpoint; it is not a DTMC-GA-generated source transformation.'
+          }
+          pathlib.Path('native_parallel_protocol.json').write_text(json.dumps(protocol, indent=2))
+
+          for tag,(threads,cpuset) in configs.items():
+              for i in range(1,4):
+                  path = pathlib.Path('native_parallel_logs') / f'warmup_{tag}_{i:02d}.txt'
+                  with path.open('w') as f:
+                      subprocess.run(command(threads,cpuset), env=env_for(threads), stdout=f, stderr=subprocess.STDOUT, check=True)
+
+          rng = random.Random(470)
+          rows=[]
+          for pair in range(1,31):
+              order=['T1','TP']; rng.shuffle(order)
+              for tag in order:
+                  threads,cpuset=configs[tag]
+                  log=pathlib.Path('native_parallel_logs')/f'run_{pair:02d}_{tag}.txt'
+                  start=time.perf_counter_ns()
+                  with log.open('w') as f:
+                      cp=subprocess.run(command(threads,cpuset), env=env_for(threads), stdout=f, stderr=subprocess.STDOUT)
+                  elapsed=(time.perf_counter_ns()-start)/1e9
+                  if cp.returncode != 0:
+                      raise RuntimeError(f'{tag} pair {pair} failed: exit {cp.returncode}')
+                  rows.append({'pair':pair,'configuration':tag,'threads':threads,'cpuset':cpuset,'seconds':elapsed,'exit_code':cp.returncode})
+                  print(pair, tag, elapsed, flush=True)
+
+          with open('native_parallel_30pairs.csv','w',newline='') as f:
+              w=csv.DictWriter(f,fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)
+          t1=[r['seconds'] for r in rows if r['configuration']=='T1']
+          tp=[r['seconds'] for r in rows if r['configuration']=='TP']
+          bypair={i:{} for i in range(1,31)}
+          for r in rows: bypair[r['pair']][r['configuration']]=r['seconds']
+          ratios=[bypair[i]['T1']/bypair[i]['TP'] for i in range(1,31)]
+          summary={
+              'n_pairs':30,'parallel_threads':p,
+              't1_mean_s':statistics.mean(t1),'t1_median_s':statistics.median(t1),'t1_sample_sd_s':statistics.stdev(t1),
+              'parallel_mean_s':statistics.mean(tp),'parallel_median_s':statistics.median(tp),'parallel_sample_sd_s':statistics.stdev(tp),
+              'ratio_of_means_speedup':statistics.mean(t1)/statistics.mean(tp),
+              'paired_speedup_mean':statistics.mean(ratios),'paired_speedup_median':statistics.median(ratios),'paired_speedup_sample_sd':statistics.stdev(ratios),
+              'all_exit_codes_zero':all(r['exit_code']==0 for r in rows),
+              'interpretation':'Measured native OpenCV parallel calibration; not a generated DTMC-GA rewrite.'
+          }
+          pathlib.Path('native_parallel_summary.json').write_text(json.dumps(summary,indent=2))
+          pathlib.Path('native_parallel_summary.txt').write_text('\n'.join(f'{k}: {v}' for k,v in summary.items())+'\n')
+          PY
+
+      - name: Validate and publish evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import csv,json
+          rows=list(csv.DictReader(open('native_parallel_30pairs.csv')))
+          assert len(rows)==60
+          assert sum(r['configuration']=='T1' for r in rows)==30
+          assert sum(r['configuration']=='TP' for r in rows)==30
+          s=json.load(open('native_parallel_summary.json'))
+          assert s['n_pairs']==30 and s['all_exit_codes_zero'] is True
+          PY
+          out=results/opencv470/native_parallel_calibration
+          rm -rf "$out" && mkdir -p "$out"
+          cp native_runner_provenance.txt native_cmake_release.log native_build_release.log native_dnn_tests.txt \
+             native_parallel_protocol.json native_parallel_30pairs.csv native_parallel_summary.json native_parallel_summary.txt "$out"/
+          cp -r native_parallel_logs "$out"/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$out"
+          git commit -m 'Publish OpenCV 4.7.0 native parallel calibration' || true
+          git push
+
+      - name: Upload calibration artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opencv470-native-parallel-calibration
+          path: |
+            native_runner_provenance.txt
+            native_parallel_protocol.json
+            native_parallel_30pairs.csv
+            native_parallel_summary.json
+            native_parallel_summary.txt
+            native_parallel_logs/
