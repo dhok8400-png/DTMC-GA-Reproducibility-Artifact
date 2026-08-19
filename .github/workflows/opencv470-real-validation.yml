@@ -10,7 +10,7 @@ on:
 jobs:
   opencv470-validation:
     runs-on: ubuntu-22.04
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
       - name: Checkout artifact repository
         uses: actions/checkout@v4
@@ -38,11 +38,30 @@ jobs:
           sha256sum opencv-src/modules/dnn/perf/perf_convolution.cpp | tee -a opencv470_key_hashes.txt
           sha256sum opencv-src/CMakeLists.txt | tee -a opencv470_key_hashes.txt
 
-      - name: Install build dependencies
+      - name: Record and verify hosted-runner toolchain
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build cmake g++ python3 python3-numpy \
-            libjpeg-dev libpng-dev libtiff-dev libopenblas-dev
+          set -euo pipefail
+          {
+            echo "=== uname ==="
+            uname -a
+            echo "=== lscpu ==="
+            lscpu
+            echo "=== memory ==="
+            free -h
+            echo "=== cmake ==="
+            cmake --version
+            echo "=== ninja ==="
+            ninja --version
+            echo "=== compiler ==="
+            g++ --version
+            echo "=== python ==="
+            python3 --version
+          } | tee runner-provenance.txt
+          command -v cmake
+          command -v ninja
+          command -v g++
+          command -v python3
 
       - name: Configure clean Release build
         run: |
@@ -61,6 +80,11 @@ jobs:
             -DWITH_OPENVINO=OFF \
             -DWITH_ITT=OFF \
             -DWITH_FFMPEG=OFF \
+            -DWITH_GSTREAMER=OFF \
+            -DWITH_V4L=OFF \
+            -DWITH_OPENJPEG=OFF \
+            -DWITH_OPENEXR=OFF \
+            -DWITH_LAPACK=OFF \
             | tee cmake-release.log
 
       - name: Verify Release perf target exists
@@ -90,6 +114,11 @@ jobs:
             -DWITH_OPENVINO=OFF \
             -DWITH_ITT=OFF \
             -DWITH_FFMPEG=OFF \
+            -DWITH_GSTREAMER=OFF \
+            -DWITH_V4L=OFF \
+            -DWITH_OPENJPEG=OFF \
+            -DWITH_OPENEXR=OFF \
+            -DWITH_LAPACK=OFF \
             | tee cmake-profile.log
 
       - name: Verify profile perf target exists
@@ -114,6 +143,7 @@ jobs:
           path: |
             opencv470_commit.txt
             opencv470_key_hashes.txt
+            runner-provenance.txt
             cmake-release.log
             build-release.log
             cmake-profile.log
