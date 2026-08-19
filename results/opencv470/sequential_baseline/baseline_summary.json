@@ -1,0 +1,9 @@
+{
+  "n": 30,
+  "mean_seconds": 4.491456572233333,
+  "median_seconds": 4.470818768,
+  "sample_sd_seconds": 0.11843132920528969,
+  "min_seconds": 4.430297497,
+  "max_seconds": 5.10110622,
+  "coefficient_of_variation_percent": 2.6368134100960674
+}

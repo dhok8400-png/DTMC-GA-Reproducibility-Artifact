@@ -1,0 +1,12 @@
+{
+  "run_id": 32283811146,
+  "run_number": 1,
+  "run_attempt": 1,
+  "head_sha": "95775714884d1fb6d88d7a7e80b85ed511733609",
+  "html_url": "https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact/actions/runs/32283811146",
+  "created_at": "2026-08-19T17:49:17Z",
+  "updated_at": "2026-08-19T17:58:56Z",
+  "artifact_id": 9377158036,
+  "artifact_name": "opencv470-sequential-baseline-30runs",
+  "artifact_size_in_bytes": 56160
+}

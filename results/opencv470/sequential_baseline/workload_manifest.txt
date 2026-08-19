@@ -1,0 +1,11 @@
+Fixed real-OpenCV DNN convolution workload (OpenCV 4.7.0, modules/dnn/perf/perf_convolution.cpp)
+GTest filter: Conv.conv/0:Conv.conv/2:Conv.conv/28:Conv.conv/42:Conv.conv/69
+Selection frozen before timing to span distinct official convolution configurations:
+- conv/0: 7x7 convolution, bias, standard groups
+- conv/2: high-FLOP 5x5 SAME convolution
+- conv/28: 5x5 stride-2 SAME convolution
+- conv/42: 1x1 convolution
+- conv/69: 3x3 depthwise/grouped convolution (G=1024)
+Sequential controls: --perf_threads=1 plus OPENCV_FOR_THREADS_NUM=1; process affinity restricted to one CPU where supported.
+Measurement design: 3 untimed warm-up process runs, then 30 independent timed process runs of the same fixed five-test workload.
+OpenCV perf defaults retained explicitly: seed=809564, min_samples=10, force_samples=100, time_limit=3.0 s/test.

@@ -1,0 +1,17 @@
+{
+  "audit_status": "PASS",
+  "exact_opencv_commit": "725e440d278aca07d35a5e8963ef990572b07316",
+  "warmup_logs": 3,
+  "timed_run_logs": 30,
+  "all_timed_exit_codes_zero": true,
+  "sequential_thread_controls_verified": true,
+  "one_cpu_affinity_verified": true,
+  "n": 30,
+  "mean_seconds": 4.491456572233333,
+  "median_seconds": 4.470818768,
+  "sample_sd_seconds": 0.11843132920528969,
+  "min_seconds": 4.430297497,
+  "max_seconds": 5.10110622,
+  "coefficient_of_variation_percent": 2.6368134100960674,
+  "baseline_csv_sha256": "321deb95d357e275a02aad689ff708d040f7980a51b1072bbe2bd1c66e73a4f4"
+}
