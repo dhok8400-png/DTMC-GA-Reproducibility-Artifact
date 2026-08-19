@@ -10,12 +10,52 @@ This repository contains the public Phase 3C/Phase 5A reproducibility artifact f
 * Zenodo archive: https://doi.org/10.5281/zenodo.21457470
 * GitHub release: `v0.3.6-mdpi-data-availability`
 * Docker/CI verification status: **PASSED**
+* OpenCV 4.7.0 exact-source build validation: **PASSED**
+* OpenCV 4.7.0 30-run sequential baseline: **PASSED**
 
-GitHub Actions successfully completed the Phase 3C Artifact Verification workflow, including Python smoke/integrity checks and Docker build/run verification.
+GitHub Actions successfully completed the Phase 3C Artifact Verification workflow, including Python smoke/integrity checks and Docker build/run verification. Revision-time GitHub Actions also verified and built the exact OpenCV 4.7.0 source tree and executed a fixed DNN convolution workload under explicit sequential controls.
 
-The artifact includes source code, benchmark fixtures, retained raw results, processed results, statistical scripts, generated figures, Docker configuration, and the GitHub Actions CI workflow.
+The artifact includes source code, benchmark fixtures, retained raw results, processed results, statistical scripts, generated figures, Docker configuration, GitHub Actions workflows, and revision-time OpenCV 4.7.0 execution evidence.
 
-**Important:** The quantitative evidence in this artifact is based on the local executable benchmark suite with five fixtures and 750 retained runs. It is not presented as external large-project runtime evidence for Chromium, Firefox, MySQL, OpenCV, Unreal, Godot, or ITK. Those external large-project traces are left for future validation.
+**Evidence boundary:** The central comparative results remain the five-fixture executable benchmark-suite study with 750 retained runs and model-derived performance indicators. In addition, the revision now includes direct real-project OpenCV 4.7.0 source/build/workload execution evidence and a measured sequential runtime reference. This OpenCV baseline is not, by itself, evidence of DTMC-GA optimized measured speedup, automatic production-C++ rewriting, byte-level communication volume, or production transformation safety.
+
+## Executed OpenCV 4.7.0 Validation
+
+The revision-time real-project validation uses the official OpenCV 4.7.0 source tree at commit:
+
+`725e440d278aca07d35a5e8963ef990572b07316`
+
+The fixed DNN convolution workload contains:
+
+* `Conv.conv/0`
+* `Conv.conv/2`
+* `Conv.conv/28`
+* `Conv.conv/42`
+* `Conv.conv/69`
+
+The clean Release baseline uses `--perf_threads=1`, `OPENCV_FOR_THREADS_NUM=1`, matching single-thread environment controls, and one-CPU process affinity where supported. After three untimed warm-up process runs, 30 independent timed process runs completed successfully.
+
+Audited sequential baseline summary:
+
+* successful timed runs: **30/30**
+* mean: **4.491456572 s**
+* median: **4.470818768 s**
+* sample SD: **0.118431329 s**
+* minimum: **4.430297497 s**
+* maximum: **5.101106220 s**
+* coefficient of variation: **2.6368%**
+
+The baseline runner provenance records Ubuntu 22.04 on a GitHub-hosted Azure VM with an **AMD EPYC 7763** processor, 4 exposed logical CPUs, GCC/G++ 11.4.0, CMake 3.31.6, Ninja 1.13.2, and Python 3.10.12. The timed process itself is restricted to one CPU for the sequential reference.
+
+The audited evidence is retained under:
+
+`results/opencv470/sequential_baseline/`
+
+A reviewer-response draft for the real-project execution comment is retained at:
+
+`results/opencv470/R3C1_REVIEWER_RESPONSE_DRAFT.md`
+
+Instrumented OpenCV profiling is a separate revision-time campaign. Its results are not treated as complete evidence until the profiling workflow and independent publisher/audit finish successfully.
 
 ## Included Implementation Modules
 
@@ -76,18 +116,17 @@ The repository contains the essential data needed to support and verify the cent
 * processed summaries and statistical tests in `processed_results/`
 * benchmark and workload metadata in `benchmarks/benchmark_metadata.csv` and `workloads/workload_metadata.csv`
 * figure provenance in `raw_results/figure_manifest.csv`
+* audited OpenCV baseline evidence in `results/opencv470/sequential_baseline/`
 * a human-readable guide in `DATA_DICTIONARY.md`
 * a machine-readable variable dictionary in `DATA_DICTIONARY.csv`
 
 The dataset contains no personally identifiable, confidential, patient, account, or proprietary third-party information.
 
-The `memory_mb` field is blank because memory usage was not collected for the retained runs. Blank values must not be interpreted as zero.
+The `memory_mb` field in the retained fixture-suite run table is blank because memory usage was not collected for those retained runs. Blank values must not be interpreted as zero.
 
 ### Recommended Data Availability Statement
 
-> The minimal dataset supporting the central findings of this study, including benchmark fixtures, retained raw results, processed outputs, statistical analysis scripts, and figure-generation scripts, is publicly available in the GitHub reproducibility repository at https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact and archived on Zenodo at https://doi.org/10.5281/zenodo.21457470.
-
-
+> The minimal dataset supporting the central findings of this study, including benchmark fixtures, retained raw results, processed outputs, statistical analysis scripts, figure-generation scripts, and revision-time audited OpenCV 4.7.0 baseline evidence, is publicly available in the GitHub reproducibility repository at https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact and the core archived artifact is available on Zenodo at https://doi.org/10.5281/zenodo.21457470.
 
 ## Run the Smoke Test
 
@@ -147,23 +186,22 @@ The GitHub Actions workflow successfully completed the Phase 3C Artifact Verific
 
 ## GitHub Actions CI
 
-The CI workflow is located at:
+The repository contains the core artifact CI workflow and revision-time OpenCV validation workflows under `.github/workflows/`.
 
-```text
-.github/workflows/artifact-ci.yml
-```
-
-It performs:
+They cover:
 
 * Python dependency installation
 * smoke and integrity checks
 * Phase 3C artifact verification
-* Docker image build
-* Docker-based packaged-output verification
+* Docker image build and packaged-output verification
+* exact OpenCV 4.7.0 source identity checking
+* clean and profiling-capable OpenCV DNN builds
+* fixed-workload sequential runtime measurement
+* revision-time instrumented profiling and independent evidence publishing
 
 ## Reproducibility Scope
 
-This artifact supports the reproducible evidence reported in the manuscript for the local executable benchmark suite.
+This artifact supports the reproducible evidence reported in the manuscript for the local executable benchmark suite and the revision-time OpenCV 4.7.0 execution checkpoint.
 
 ### Included evidence
 
@@ -176,21 +214,27 @@ This artifact supports the reproducible evidence reported in the manuscript for 
 * figure-provenance documentation
 * human-readable and machine-readable data dictionaries
 * Docker configuration
-* GitHub Actions CI workflow
+* GitHub Actions CI workflows
+* exact OpenCV 4.7.0 source/build provenance
+* 30-run measured OpenCV sequential baseline and raw logs
 * Zenodo archival record: `10.5281/zenodo.21457470`
 
-### Not included as final evidence
+### Not yet included as final evidence
 
+* measured DTMC-GA optimized/parallel OpenCV runtime
+* modeled-versus-measured OpenCV speedup error
+* byte-level communication-volume measurements for OpenCV
+* measured parallel overlap for OpenCV
+* production OpenCV source-rewrite safety/equivalence evidence
 * external Chromium runtime traces
 * external Firefox runtime traces
 * external MySQL runtime traces
-* external OpenCV runtime traces
 * external Unreal runtime traces
 * external Godot runtime traces
 * external ITK runtime traces
-* other full large-project runtime measurements
+* other full large-project optimized-runtime measurements
 
-Those large-system studies are treated as future external validation.
+These stronger claims remain outside the current evidence until their dedicated execution and audit steps complete.
 
 ## Citation
 
