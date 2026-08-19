@@ -1,0 +1,208 @@
+name: Publish OpenCV 4.7.0 Baseline Evidence
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/opencv470-publish-baseline-evidence.yml'
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish-baseline-evidence:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout artifact repository
+        uses: actions/checkout@v4
+
+      - name: Locate latest successful baseline artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, pathlib, urllib.request
+
+          repo = os.environ['GITHUB_REPOSITORY']
+          token = os.environ['GH_TOKEN']
+          api = os.environ['GITHUB_API_URL']
+          headers = {
+              'Authorization': f'Bearer {token}',
+              'Accept': 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28',
+          }
+
+          def get_json(url):
+              req = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(req) as r:
+                  return json.load(r)
+
+          runs = get_json(f'{api}/repos/{repo}/actions/workflows/opencv470-sequential-baseline.yml/runs?status=success&per_page=20')
+          if not runs.get('workflow_runs'):
+              raise RuntimeError('No successful OpenCV 4.7.0 Sequential Baseline run found')
+          run = runs['workflow_runs'][0]
+          run_id = run['id']
+          artifacts = get_json(f'{api}/repos/{repo}/actions/runs/{run_id}/artifacts')
+          matches = [a for a in artifacts.get('artifacts', []) if a['name'] == 'opencv470-sequential-baseline-30runs' and not a.get('expired')]
+          if not matches:
+              raise RuntimeError(f'Baseline artifact not found for run {run_id}')
+          art = matches[0]
+          pathlib.Path('baseline_artifact_meta.json').write_text(json.dumps({
+              'run_id': run_id,
+              'run_number': run.get('run_number'),
+              'run_attempt': run.get('run_attempt'),
+              'head_sha': run.get('head_sha'),
+              'html_url': run.get('html_url'),
+              'created_at': run.get('created_at'),
+              'updated_at': run.get('updated_at'),
+              'artifact_id': art['id'],
+              'artifact_name': art['name'],
+              'artifact_size_in_bytes': art.get('size_in_bytes'),
+          }, indent=2))
+          print(art['archive_download_url'])
+          pathlib.Path('artifact_download_url.txt').write_text(art['archive_download_url'] + '\n')
+          PY
+
+      - name: Download baseline artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          url="$(cat artifact_download_url.txt)"
+          curl --fail --location --silent --show-error \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$url" -o baseline.zip
+          rm -rf baseline-evidence
+          mkdir baseline-evidence
+          unzip -q baseline.zip -d baseline-evidence
+
+      - name: Independently audit 30-run evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import csv, hashlib, json, pathlib, statistics
+
+          root = pathlib.Path('baseline-evidence')
+          required = [
+              'opencv470_commit.txt', 'opencv470_key_hashes.txt', 'runner-provenance.txt',
+              'workload_manifest.txt', 'baseline_protocol.json', 'baseline_30runs.csv',
+              'baseline_summary.json', 'baseline_summary.txt'
+          ]
+          for name in required:
+              if not (root / name).is_file():
+                  raise RuntimeError(f'Missing evidence file: {name}')
+
+          rows = list(csv.DictReader((root / 'baseline_30runs.csv').open()))
+          if len(rows) != 30:
+              raise RuntimeError(f'Expected 30 timed runs, found {len(rows)}')
+          if any(int(r['exit_code']) != 0 for r in rows):
+              raise RuntimeError('At least one timed baseline run has non-zero exit code')
+
+          warmups = sorted((root / 'baseline_run_logs').glob('warmup_*.txt'))
+          timed_logs = sorted((root / 'baseline_run_logs').glob('run_*.txt'))
+          if len(warmups) != 3 or len(timed_logs) != 30:
+              raise RuntimeError(f'Expected 3 warmups/30 timed logs, found {len(warmups)}/{len(timed_logs)}')
+
+          protocol = json.loads((root / 'baseline_protocol.json').read_text())
+          if protocol.get('warmup_runs') != 3 or protocol.get('timed_runs') != 30:
+              raise RuntimeError('Protocol does not record 3 warmups and 30 timed runs')
+          controls = protocol.get('environment_thread_controls', {})
+          for key in ['OPENCV_FOR_THREADS_NUM','OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','NUMEXPR_NUM_THREADS']:
+              if str(controls.get(key)) != '1':
+                  raise RuntimeError(f'Sequential thread control {key} is not 1')
+          if protocol.get('cpu_affinity') and len(protocol['cpu_affinity']) != 1:
+              raise RuntimeError('CPU affinity is not restricted to one CPU')
+
+          values = [float(r['elapsed_seconds']) for r in rows]
+          recomputed = {
+              'n': len(values),
+              'mean_seconds': statistics.mean(values),
+              'median_seconds': statistics.median(values),
+              'sample_sd_seconds': statistics.stdev(values),
+              'min_seconds': min(values),
+              'max_seconds': max(values),
+          }
+          recomputed['coefficient_of_variation_percent'] = recomputed['sample_sd_seconds'] / recomputed['mean_seconds'] * 100.0
+          recorded = json.loads((root / 'baseline_summary.json').read_text())
+          for key, value in recomputed.items():
+              if abs(float(recorded[key]) - float(value)) > 1e-9:
+                  raise RuntimeError(f'Recorded summary mismatch for {key}: {recorded[key]} vs {value}')
+
+          commit = (root / 'opencv470_commit.txt').read_text().strip()
+          expected_commit = '725e440d278aca07d35a5e8963ef990572b07316'
+          if commit != expected_commit:
+              raise RuntimeError(f'Unexpected OpenCV commit: {commit}')
+
+          audit = {
+              'audit_status': 'PASS',
+              'exact_opencv_commit': commit,
+              'warmup_logs': len(warmups),
+              'timed_run_logs': len(timed_logs),
+              'all_timed_exit_codes_zero': True,
+              'sequential_thread_controls_verified': True,
+              'one_cpu_affinity_verified': bool(protocol.get('cpu_affinity') and len(protocol['cpu_affinity']) == 1),
+              **recomputed,
+              'baseline_csv_sha256': hashlib.sha256((root / 'baseline_30runs.csv').read_bytes()).hexdigest(),
+          }
+          pathlib.Path('baseline_audit.json').write_text(json.dumps(audit, indent=2))
+          lines = [
+              '# OpenCV 4.7.0 Sequential Baseline — Independent Evidence Audit', '',
+              '**Status: PASS**', '',
+              f"- Exact OpenCV commit: `{commit}`",
+              f"- Untimed warm-up runs: {len(warmups)}",
+              f"- Independent timed runs: {len(timed_logs)}",
+              '- All 30 timed process exit codes: 0',
+              '- Sequential controls: verified at 1 thread for OpenCV/OMP/OpenBLAS/MKL/NumExpr',
+              f"- One-CPU affinity: {'verified' if audit['one_cpu_affinity_verified'] else 'not reported by runner'}",
+              f"- Mean runtime: {recomputed['mean_seconds']:.9f} s",
+              f"- Median runtime: {recomputed['median_seconds']:.9f} s",
+              f"- Sample SD: {recomputed['sample_sd_seconds']:.9f} s",
+              f"- Minimum: {recomputed['min_seconds']:.9f} s",
+              f"- Maximum: {recomputed['max_seconds']:.9f} s",
+              f"- CV: {recomputed['coefficient_of_variation_percent']:.4f}%",
+              f"- baseline_30runs.csv SHA-256: `{audit['baseline_csv_sha256']}`", '',
+              'This audit recomputes the statistics from the 30-run CSV and checks the raw-log counts, exit codes, exact source identity, and sequential-execution controls before publishing the evidence.',
+          ]
+          pathlib.Path('BASELINE_EVIDENCE_AUDIT.md').write_text('\n'.join(lines) + '\n')
+          print('\n'.join(lines))
+          PY
+
+      - name: Publish audited evidence in repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=results/opencv470/sequential_baseline
+          rm -rf "$out"
+          mkdir -p "$out"
+          cp baseline_artifact_meta.json baseline_audit.json BASELINE_EVIDENCE_AUDIT.md "$out"/
+          cp baseline-evidence/opencv470_commit.txt "$out"/
+          cp baseline-evidence/opencv470_key_hashes.txt "$out"/
+          cp baseline-evidence/runner-provenance.txt "$out"/
+          cp baseline-evidence/workload_manifest.txt "$out"/
+          cp baseline-evidence/baseline_protocol.json "$out"/
+          cp baseline-evidence/baseline_30runs.csv "$out"/
+          cp baseline-evidence/baseline_summary.json "$out"/
+          cp baseline-evidence/baseline_summary.txt "$out"/
+          cp -r baseline-evidence/baseline_run_logs "$out"/
+
+      - name: Commit audited baseline evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/opencv470/sequential_baseline
+          if git diff --cached --quiet; then
+            echo 'No evidence changes to commit.'
+          else
+            git commit -m 'Publish audited OpenCV 4.7.0 30-run baseline evidence'
+            git push
+          fi
