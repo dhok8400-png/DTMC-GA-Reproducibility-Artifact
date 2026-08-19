@@ -1,0 +1,376 @@
+name: OpenCV 4.7.0 Instrumented Profiling
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/opencv470-instrumented-profiling.yml'
+
+jobs:
+  instrumented-profiling:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout artifact repository
+        uses: actions/checkout@v4
+
+      - name: Checkout exact OpenCV 4.7.0 source
+        uses: actions/checkout@v4
+        with:
+          repository: opencv/opencv
+          ref: 725e440d278aca07d35a5e8963ef990572b07316
+          path: opencv-src
+
+      - name: Verify exact source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C opencv-src rev-parse HEAD | tee opencv470_commit.txt
+          test "$(cat opencv470_commit.txt)" = "725e440d278aca07d35a5e8963ef990572b07316"
+          grep -q 'CV_VERSION_MAJOR    4' opencv-src/modules/core/include/opencv2/core/version.hpp
+          grep -q 'CV_VERSION_MINOR    7' opencv-src/modules/core/include/opencv2/core/version.hpp
+          grep -q 'CV_VERSION_REVISION 0' opencv-src/modules/core/include/opencv2/core/version.hpp
+          sha256sum opencv-src/modules/core/include/opencv2/core/version.hpp | tee opencv470_key_hashes.txt
+          sha256sum opencv-src/modules/dnn/perf/perf_convolution.cpp | tee -a opencv470_key_hashes.txt
+          sha256sum opencv-src/CMakeLists.txt | tee -a opencv470_key_hashes.txt
+
+      - name: Record hosted-runner provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "=== uname ==="
+            uname -a
+            echo "=== lscpu ==="
+            lscpu
+            echo "=== memory ==="
+            free -h
+            echo "=== cmake ==="
+            cmake --version
+            echo "=== ninja ==="
+            ninja --version
+            echo "=== compiler ==="
+            g++ --version
+            echo "=== python ==="
+            python3 --version
+          } | tee runner-provenance.txt
+
+      - name: Configure instrumented profile build
+        run: |
+          cmake -S opencv-src -B build-profile -G Ninja \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_CXX_FLAGS_RELWITHDEBINFO='-O2 -g -fno-omit-frame-pointer' \
+            -DENABLE_INSTRUMENTATION=ON \
+            -DBUILD_LIST=dnn,ts \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_PERF_TESTS=ON \
+            -DBUILD_EXAMPLES=OFF \
+            -DBUILD_opencv_apps=OFF \
+            -DBUILD_JAVA=OFF \
+            -DBUILD_opencv_python3=OFF \
+            -DWITH_IPP=OFF \
+            -DWITH_OPENCL=OFF \
+            -DWITH_CUDA=OFF \
+            -DWITH_OPENVINO=OFF \
+            -DWITH_ITT=OFF \
+            -DWITH_FFMPEG=OFF \
+            -DWITH_GSTREAMER=OFF \
+            -DWITH_V4L=OFF \
+            -DWITH_OPENJPEG=OFF \
+            -DWITH_OPENEXR=OFF \
+            -DWITH_LAPACK=OFF \
+            | tee cmake-profile.log
+
+      - name: Build instrumented DNN performance target
+        run: |
+          ninja -C build-profile -t targets | grep -E '^opencv_perf_dnn:' | tee profile-target-check.txt
+          cmake --build build-profile --target opencv_perf_dnn -j2 | tee build-profile.log
+          test -x build-profile/bin/opencv_perf_dnn
+
+      - name: Verify instrumentation and fixed workload
+        shell: bash
+        run: |
+          set -euo pipefail
+          build-profile/bin/opencv_perf_dnn --help > perf-help.txt
+          grep -q 'perf_instrument' perf-help.txt
+          build-profile/bin/opencv_perf_dnn --gtest_list_tests > dnn-tests.txt
+          for id in 0 2 28 42 69; do
+            grep -q "conv/${id}" dnn-tests.txt
+          done
+          cat > profiling_protocol.txt <<'EOF'
+          OpenCV 4.7.0 instrumented profiling protocol
+          Exact source commit: 725e440d278aca07d35a5e8963ef990572b07316
+          Fixed workload: Conv.conv/0:Conv.conv/2:Conv.conv/28:Conv.conv/42:Conv.conv/69
+          Instrumentation: official OpenCV ENABLE_INSTRUMENTATION=ON and --perf_instrument=2.
+          Sequential controls: --perf_threads=1, OPENCV_FOR_THREADS_NUM=1, and one-CPU affinity.
+          Warm-up: 2 untimed instrumented process runs.
+          Profiling replicates: 5 independent instrumented process runs.
+          OpenCV perf controls: seed=809564, min_samples=10, force_samples=100, time_limit=3.0 s/test.
+          Evidence boundary: trace nodes provide observed instrumented function labels, thread counts,
+          call counts, total instrumented time, and local/global time weights. Parent-child trace edges
+          are treated as observed dynamic interaction edges. No byte-level communication volume is
+          inferred. Because the profiling run is intentionally single-threaded to match the sequential
+          baseline, inter-thread execution overlap is zero by design and is not presented as a measured
+          parallel-overlap result.
+          EOF
+
+      - name: Warm up and collect instrumented traces
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p profiling_logs
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess
+
+          binary = pathlib.Path('build-profile/bin/opencv_perf_dnn')
+          test_filter = 'Conv.conv/0:Conv.conv/2:Conv.conv/28:Conv.conv/42:Conv.conv/69'
+          cmd = [
+              str(binary),
+              f'--gtest_filter={test_filter}',
+              '--perf_threads=1',
+              '--perf_seed=809564',
+              '--perf_min_samples=10',
+              '--perf_force_samples=100',
+              '--perf_time_limit=3.0',
+              '--perf_instrument=2',
+              '--gtest_color=no',
+          ]
+
+          env = os.environ.copy()
+          env.update({
+              'OPENCV_FOR_THREADS_NUM': '1',
+              'OMP_NUM_THREADS': '1',
+              'OPENBLAS_NUM_THREADS': '1',
+              'MKL_NUM_THREADS': '1',
+              'NUMEXPR_NUM_THREADS': '1',
+          })
+
+          affinity = None
+          if hasattr(os, 'sched_setaffinity'):
+              allowed = sorted(os.sched_getaffinity(0))
+              if not allowed:
+                  raise RuntimeError('No CPUs available in sched_getaffinity')
+              os.sched_setaffinity(0, {allowed[0]})
+              affinity = sorted(os.sched_getaffinity(0))
+
+          pathlib.Path('profiling_run_protocol.json').write_text(json.dumps({
+              'command': cmd,
+              'environment_thread_controls': {k: env[k] for k in [
+                  'OPENCV_FOR_THREADS_NUM','OMP_NUM_THREADS','OPENBLAS_NUM_THREADS',
+                  'MKL_NUM_THREADS','NUMEXPR_NUM_THREADS'
+              ]},
+              'cpu_affinity': affinity,
+              'warmup_runs': 2,
+              'profile_runs': 5,
+          }, indent=2))
+
+          for i in range(1, 3):
+              log = pathlib.Path('profiling_logs') / f'warmup_{i:02d}.txt'
+              with log.open('w') as f:
+                  subprocess.run(cmd, env=env, stdout=f, stderr=subprocess.STDOUT, check=True)
+
+          for i in range(1, 6):
+              log = pathlib.Path('profiling_logs') / f'profile_{i:02d}.txt'
+              with log.open('w') as f:
+                  cp = subprocess.run(cmd, env=env, stdout=f, stderr=subprocess.STDOUT)
+              if cp.returncode != 0:
+                  raise RuntimeError(f'Profile run {i} failed with exit code {cp.returncode}; see {log}')
+              print(f'profile run {i:02d}: PASS', flush=True)
+          PY
+
+      - name: Parse trace nodes and dynamic interaction edges
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import csv, json, pathlib, re, statistics
+          from collections import defaultdict
+
+          metric_re = re.compile(
+              r' - TC:(?P<threads>\d+) C:(?P<calls>\d+) T:(?P<ms>[0-9.]+)ms'
+              r'(?: L:(?P<local>[0-9.]+)% G:(?P<global>[0-9.]+)%)?\s*$'
+          )
+
+          node_rows = []
+          edge_rows = []
+          trace_sections = 0
+
+          for run_idx, path in enumerate(sorted(pathlib.Path('profiling_logs').glob('profile_*.txt')), start=1):
+              lines = path.read_text(errors='replace').splitlines()
+              in_trace = False
+              stack = {}
+              for line in lines:
+                  if line.strip() == '[ TRACE    ]':
+                      in_trace = True
+                      trace_sections += 1
+                      stack = {}
+                      continue
+                  if line.strip() == '[/TRACE    ]':
+                      in_trace = False
+                      stack = {}
+                      continue
+                  if not in_trace or ' - TC:' not in line:
+                      continue
+
+                  m = metric_re.search(line)
+                  if not m:
+                      continue
+
+                  left = line[:m.start()]
+                  branch_pos = max(left.rfind('|---'), left.rfind('\\---'))
+                  if branch_pos >= 0:
+                      shift = left[:branch_pos]
+                      depth = len(shift) // 4 + 1
+                      label = left[branch_pos + 4:].strip()
+                  else:
+                      depth = 0
+                      label = left.strip()
+
+                  parent = stack.get(depth - 1, '') if depth > 0 else ''
+                  stack[depth] = label
+                  for d in list(stack):
+                      if d > depth:
+                          del stack[d]
+
+                  row = {
+                      'run': run_idx,
+                      'depth': depth,
+                      'parent': parent,
+                      'node': label,
+                      'threads': int(m.group('threads')),
+                      'calls': int(m.group('calls')),
+                      'total_ms': float(m.group('ms')),
+                      'local_pct': float(m.group('local')) if m.group('local') is not None else '',
+                      'global_pct': float(m.group('global')) if m.group('global') is not None else '',
+                  }
+                  node_rows.append(row)
+                  if parent:
+                      edge_rows.append({
+                          'run': run_idx,
+                          'parent': parent,
+                          'child': label,
+                          'calls': row['calls'],
+                          'child_total_ms': row['total_ms'],
+                          'child_global_pct': row['global_pct'],
+                      })
+
+          if not node_rows:
+              raise RuntimeError('No instrumented trace nodes were parsed from profiling logs')
+          if not edge_rows:
+              raise RuntimeError('No parent-child dynamic interaction edges were parsed')
+
+          with open('profile_nodes.csv', 'w', newline='') as f:
+              w = csv.DictWriter(f, fieldnames=[
+                  'run','depth','parent','node','threads','calls','total_ms','local_pct','global_pct'
+              ])
+              w.writeheader(); w.writerows(node_rows)
+
+          with open('dynamic_interaction_edges.csv', 'w', newline='') as f:
+              w = csv.DictWriter(f, fieldnames=[
+                  'run','parent','child','calls','child_total_ms','child_global_pct'
+              ])
+              w.writeheader(); w.writerows(edge_rows)
+
+          node_groups = defaultdict(list)
+          for r in node_rows:
+              node_groups[(r['parent'], r['node'])].append(r)
+
+          node_summary = []
+          for (parent, node), rows in sorted(node_groups.items()):
+              times = [float(r['total_ms']) for r in rows]
+              calls = [int(r['calls']) for r in rows]
+              threads = [int(r['threads']) for r in rows]
+              node_summary.append({
+                  'parent': parent,
+                  'node': node,
+                  'observations': len(rows),
+                  'mean_total_ms': statistics.mean(times),
+                  'median_total_ms': statistics.median(times),
+                  'sample_sd_total_ms': statistics.stdev(times) if len(times) > 1 else 0.0,
+                  'mean_calls': statistics.mean(calls),
+                  'min_calls': min(calls),
+                  'max_calls': max(calls),
+                  'max_threads_observed': max(threads),
+              })
+
+          with open('profile_node_summary.csv', 'w', newline='') as f:
+              w = csv.DictWriter(f, fieldnames=list(node_summary[0].keys()))
+              w.writeheader(); w.writerows(node_summary)
+
+          edge_groups = defaultdict(list)
+          for r in edge_rows:
+              edge_groups[(r['parent'], r['child'])].append(r)
+
+          edge_summary = []
+          for (parent, child), rows in sorted(edge_groups.items()):
+              calls = [int(r['calls']) for r in rows]
+              times = [float(r['child_total_ms']) for r in rows]
+              edge_summary.append({
+                  'parent': parent,
+                  'child': child,
+                  'observations': len(rows),
+                  'mean_calls': statistics.mean(calls),
+                  'min_calls': min(calls),
+                  'max_calls': max(calls),
+                  'mean_child_total_ms': statistics.mean(times),
+                  'median_child_total_ms': statistics.median(times),
+              })
+
+          with open('dynamic_interaction_edge_summary.csv', 'w', newline='') as f:
+              w = csv.DictWriter(f, fieldnames=list(edge_summary[0].keys()))
+              w.writeheader(); w.writerows(edge_summary)
+
+          summary = {
+              'profile_runs': 5,
+              'trace_sections': trace_sections,
+              'parsed_node_rows': len(node_rows),
+              'unique_parent_node_pairs': len(node_summary),
+              'parsed_edge_rows': len(edge_rows),
+              'unique_parent_child_pairs': len(edge_summary),
+              'max_threads_observed': max(int(r['threads']) for r in node_rows),
+              'communication_bytes_measured': False,
+              'parallel_overlap_measured': False,
+              'sequential_overlap_by_design': 0,
+          }
+          pathlib.Path('profiling_summary.json').write_text(json.dumps(summary, indent=2))
+          pathlib.Path('profiling_summary.txt').write_text(
+              '\n'.join(f'{k}: {v}' for k, v in summary.items()) + '\n'
+          )
+          print(json.dumps(summary, indent=2))
+          PY
+
+      - name: Validate profiling evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find profiling_logs -name 'profile_*.txt' | wc -l)" -eq 5
+          test "$(find profiling_logs -name 'warmup_*.txt' | wc -l)" -eq 2
+          test -s profile_nodes.csv
+          test -s dynamic_interaction_edges.csv
+          test -s profile_node_summary.csv
+          test -s dynamic_interaction_edge_summary.csv
+          grep -q '"profile_runs": 5' profiling_summary.json
+          cat profiling_summary.txt
+
+      - name: Upload instrumented profiling evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: opencv470-instrumented-profiling
+          path: |
+            opencv470_commit.txt
+            opencv470_key_hashes.txt
+            runner-provenance.txt
+            cmake-profile.log
+            build-profile.log
+            profile-target-check.txt
+            perf-help.txt
+            dnn-tests.txt
+            profiling_protocol.txt
+            profiling_run_protocol.json
+            profiling_logs/
+            profile_nodes.csv
+            profile_node_summary.csv
+            dynamic_interaction_edges.csv
+            dynamic_interaction_edge_summary.csv
+            profiling_summary.json
+            profiling_summary.txt
