@@ -1,0 +1,114 @@
+name: OpenCV 4.7.0 Real Validation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/opencv470-real-validation.yml'
+      - 'opencv_validation/**'
+
+jobs:
+  opencv470-validation:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout artifact repository
+        uses: actions/checkout@v4
+
+      - name: Checkout exact OpenCV 4.7.0 source
+        uses: actions/checkout@v4
+        with:
+          repository: opencv/opencv
+          ref: 725e440d278aca07d35a5e8963ef990572b07316
+          path: opencv-src
+
+      - name: Verify exact source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f opencv-src/modules/core/include/opencv2/core/version.hpp
+          test -f opencv-src/modules/dnn/perf/perf_convolution.cpp
+          grep -q 'CV_VERSION_MAJOR    4' opencv-src/modules/core/include/opencv2/core/version.hpp
+          grep -q 'CV_VERSION_MINOR    7' opencv-src/modules/core/include/opencv2/core/version.hpp
+          grep -q 'CV_VERSION_REVISION 0' opencv-src/modules/core/include/opencv2/core/version.hpp
+          grep -q 'CV_VERSION_STATUS   ""' opencv-src/modules/core/include/opencv2/core/version.hpp
+          git -C opencv-src rev-parse HEAD | tee opencv470_commit.txt
+          test "$(cat opencv470_commit.txt)" = "725e440d278aca07d35a5e8963ef990572b07316"
+          sha256sum opencv-src/modules/core/include/opencv2/core/version.hpp | tee opencv470_key_hashes.txt
+          sha256sum opencv-src/modules/dnn/perf/perf_convolution.cpp | tee -a opencv470_key_hashes.txt
+          sha256sum opencv-src/CMakeLists.txt | tee -a opencv470_key_hashes.txt
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake g++ python3 python3-numpy \
+            libjpeg-dev libpng-dev libtiff-dev libopenblas-dev
+
+      - name: Configure clean Release build
+        run: |
+          cmake -S opencv-src -B build-release -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_LIST=dnn \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_PERF_TESTS=ON \
+            -DBUILD_EXAMPLES=OFF \
+            -DBUILD_opencv_apps=OFF \
+            -DBUILD_JAVA=OFF \
+            -DBUILD_opencv_python3=OFF \
+            -DWITH_IPP=OFF \
+            -DWITH_OPENCL=OFF \
+            -DWITH_CUDA=OFF \
+            -DWITH_OPENVINO=OFF \
+            -DWITH_ITT=OFF \
+            -DWITH_FFMPEG=OFF \
+            | tee cmake-release.log
+
+      - name: Build clean Release DNN perf target
+        run: |
+          cmake --build build-release --target opencv_perf_dnn -j2 | tee build-release.log
+          test -x build-release/bin/opencv_perf_dnn
+
+      - name: Configure profile build
+        run: |
+          cmake -S opencv-src -B build-profile -G Ninja \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_CXX_FLAGS_RELWITHDEBINFO='-O2 -g -fno-omit-frame-pointer' \
+            -DBUILD_LIST=dnn \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_PERF_TESTS=ON \
+            -DBUILD_EXAMPLES=OFF \
+            -DBUILD_opencv_apps=OFF \
+            -DBUILD_JAVA=OFF \
+            -DBUILD_opencv_python3=OFF \
+            -DWITH_IPP=OFF \
+            -DWITH_OPENCL=OFF \
+            -DWITH_CUDA=OFF \
+            -DWITH_OPENVINO=OFF \
+            -DWITH_ITT=OFF \
+            -DWITH_FFMPEG=OFF \
+            | tee cmake-profile.log
+
+      - name: Build profile DNN perf target
+        run: |
+          cmake --build build-profile --target opencv_perf_dnn -j2 | tee build-profile.log
+          test -x build-profile/bin/opencv_perf_dnn
+
+      - name: Verify convolution workload inventory
+        run: |
+          build-release/bin/opencv_perf_dnn --gtest_list_tests > dnn-tests.txt || true
+          grep -i -E 'conv|convolution' dnn-tests.txt | head -100 | tee convolution-tests.txt
+          test -s convolution-tests.txt
+
+      - name: Upload build and provenance evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: opencv470-build-provenance
+          path: |
+            opencv470_commit.txt
+            opencv470_key_hashes.txt
+            cmake-release.log
+            build-release.log
+            cmake-profile.log
+            build-profile.log
+            dnn-tests.txt
+            convolution-tests.txt
