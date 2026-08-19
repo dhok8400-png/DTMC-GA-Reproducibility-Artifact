@@ -1,0 +1,212 @@
+name: Publish OpenCV 4.7.0 Profiling Evidence
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/opencv470-publish-profiling-evidence.yml'
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish-profiling-evidence:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 50
+    steps:
+      - name: Checkout artifact repository
+        uses: actions/checkout@v4
+
+      - name: Wait for latest profiling run and locate artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, pathlib, time, urllib.request
+
+          repo = os.environ['GITHUB_REPOSITORY']
+          token = os.environ['GH_TOKEN']
+          api = os.environ['GITHUB_API_URL']
+          headers = {
+              'Authorization': f'Bearer {token}',
+              'Accept': 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28',
+          }
+
+          def get_json(url):
+              req = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(req) as r:
+                  return json.load(r)
+
+          selected = None
+          for attempt in range(80):
+              data = get_json(f'{api}/repos/{repo}/actions/workflows/opencv470-instrumented-profiling.yml/runs?per_page=10')
+              runs = data.get('workflow_runs', [])
+              if runs:
+                  latest = runs[0]
+                  print(f"profiling run {latest['id']}: status={latest['status']} conclusion={latest.get('conclusion')}", flush=True)
+                  if latest['status'] == 'completed':
+                      if latest.get('conclusion') != 'success':
+                          raise RuntimeError(f"Latest profiling run completed with {latest.get('conclusion')}")
+                      selected = latest
+                      break
+              time.sleep(30)
+          if selected is None:
+              raise RuntimeError('Timed out waiting for successful instrumented profiling run')
+
+          run_id = selected['id']
+          artifacts = get_json(f'{api}/repos/{repo}/actions/runs/{run_id}/artifacts')
+          matches = [a for a in artifacts.get('artifacts', []) if a['name'] == 'opencv470-instrumented-profiling' and not a.get('expired')]
+          if not matches:
+              raise RuntimeError(f'Profiling artifact not found for run {run_id}')
+          art = matches[0]
+          meta = {
+              'run_id': run_id,
+              'run_number': selected.get('run_number'),
+              'run_attempt': selected.get('run_attempt'),
+              'head_sha': selected.get('head_sha'),
+              'html_url': selected.get('html_url'),
+              'created_at': selected.get('created_at'),
+              'updated_at': selected.get('updated_at'),
+              'artifact_id': art['id'],
+              'artifact_name': art['name'],
+              'artifact_size_in_bytes': art.get('size_in_bytes'),
+          }
+          pathlib.Path('profiling_artifact_meta.json').write_text(json.dumps(meta, indent=2))
+          pathlib.Path('artifact_download_url.txt').write_text(art['archive_download_url'] + '\n')
+          print(json.dumps(meta, indent=2))
+          PY
+
+      - name: Download profiling artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$(cat artifact_download_url.txt)" -o profiling.zip
+          rm -rf profiling-evidence
+          mkdir profiling-evidence
+          unzip -q profiling.zip -d profiling-evidence
+
+      - name: Independently audit profiling evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import csv, hashlib, json, pathlib
+
+          root = pathlib.Path('profiling-evidence')
+          required = [
+              'opencv470_commit.txt','opencv470_key_hashes.txt','runner-provenance.txt',
+              'profiling_protocol.txt','profiling_run_protocol.json','profile_nodes.csv',
+              'profile_node_summary.csv','dynamic_interaction_edges.csv',
+              'dynamic_interaction_edge_summary.csv','profiling_summary.json','profiling_summary.txt'
+          ]
+          for name in required:
+              if not (root / name).is_file():
+                  raise RuntimeError(f'Missing profiling evidence file: {name}')
+
+          commit = (root / 'opencv470_commit.txt').read_text().strip()
+          if commit != '725e440d278aca07d35a5e8963ef990572b07316':
+              raise RuntimeError(f'Unexpected OpenCV commit: {commit}')
+
+          protocol = json.loads((root / 'profiling_run_protocol.json').read_text())
+          if protocol.get('warmup_runs') != 2 or protocol.get('profile_runs') != 5:
+              raise RuntimeError('Profiling protocol does not record 2 warmups and 5 profile runs')
+          controls = protocol.get('environment_thread_controls', {})
+          for key in ['OPENCV_FOR_THREADS_NUM','OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','NUMEXPR_NUM_THREADS']:
+              if str(controls.get(key)) != '1':
+                  raise RuntimeError(f'Profiling thread control {key} is not 1')
+
+          raw_profile_logs = sorted((root / 'profiling_logs').glob('profile_*.txt'))
+          warmup_logs = sorted((root / 'profiling_logs').glob('warmup_*.txt'))
+          if len(raw_profile_logs) != 5 or len(warmup_logs) != 2:
+              raise RuntimeError(f'Expected 5 profiling logs/2 warmups, found {len(raw_profile_logs)}/{len(warmup_logs)}')
+
+          nodes = list(csv.DictReader((root / 'profile_nodes.csv').open()))
+          edges = list(csv.DictReader((root / 'dynamic_interaction_edges.csv').open()))
+          node_summary = list(csv.DictReader((root / 'profile_node_summary.csv').open()))
+          edge_summary = list(csv.DictReader((root / 'dynamic_interaction_edge_summary.csv').open()))
+          if not nodes or not edges or not node_summary or not edge_summary:
+              raise RuntimeError('Parsed profiling CSV evidence is empty')
+
+          summary = json.loads((root / 'profiling_summary.json').read_text())
+          if int(summary.get('profile_runs', -1)) != 5:
+              raise RuntimeError('profiling_summary profile_runs != 5')
+          if int(summary.get('parsed_node_rows', 0)) != len(nodes):
+              raise RuntimeError('profiling_summary parsed_node_rows mismatch')
+          if int(summary.get('parsed_edge_rows', 0)) != len(edges):
+              raise RuntimeError('profiling_summary parsed_edge_rows mismatch')
+
+          audit = {
+              'audit_status': 'PASS',
+              'exact_opencv_commit': commit,
+              'warmup_logs': len(warmup_logs),
+              'profile_logs': len(raw_profile_logs),
+              'parsed_node_rows': len(nodes),
+              'unique_parent_node_pairs': len(node_summary),
+              'parsed_edge_rows': len(edges),
+              'unique_parent_child_pairs': len(edge_summary),
+              'max_threads_observed': int(summary.get('max_threads_observed', 0)),
+              'communication_bytes_measured': bool(summary.get('communication_bytes_measured', False)),
+              'parallel_overlap_measured': bool(summary.get('parallel_overlap_measured', False)),
+              'sequential_overlap_by_design': summary.get('sequential_overlap_by_design'),
+              'profile_nodes_csv_sha256': hashlib.sha256((root / 'profile_nodes.csv').read_bytes()).hexdigest(),
+              'dynamic_edges_csv_sha256': hashlib.sha256((root / 'dynamic_interaction_edges.csv').read_bytes()).hexdigest(),
+          }
+          pathlib.Path('profiling_audit.json').write_text(json.dumps(audit, indent=2))
+          lines = [
+              '# OpenCV 4.7.0 Instrumented Profiling — Independent Evidence Audit','',
+              '**Status: PASS**','',
+              f"- Exact OpenCV commit: `{commit}`",
+              f"- Untimed profiling warm-ups: {audit['warmup_logs']}",
+              f"- Independent profiling runs: {audit['profile_logs']}",
+              f"- Parsed trace node rows: {audit['parsed_node_rows']}",
+              f"- Unique parent/node pairs: {audit['unique_parent_node_pairs']}",
+              f"- Parsed dynamic edge rows: {audit['parsed_edge_rows']}",
+              f"- Unique parent/child pairs: {audit['unique_parent_child_pairs']}",
+              f"- Maximum threads observed in trace nodes: {audit['max_threads_observed']}",
+              f"- Byte-level communication measured: {audit['communication_bytes_measured']}",
+              f"- Parallel overlap measured: {audit['parallel_overlap_measured']}",
+              f"- Sequential overlap by design: {audit['sequential_overlap_by_design']}",
+              f"- profile_nodes.csv SHA-256: `{audit['profile_nodes_csv_sha256']}`",
+              f"- dynamic_interaction_edges.csv SHA-256: `{audit['dynamic_edges_csv_sha256']}`",'',
+              'The audit confirms real instrumented call/timing/interactions evidence while preserving the boundary that byte-level communication volume and parallel overlap were not measured by this single-threaded profiling campaign.'
+          ]
+          pathlib.Path('PROFILING_EVIDENCE_AUDIT.md').write_text('\n'.join(lines) + '\n')
+          print('\n'.join(lines))
+          PY
+
+      - name: Publish audited profiling evidence in repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=results/opencv470/instrumented_profiling
+          rm -rf "$out"
+          mkdir -p "$out"
+          cp profiling_artifact_meta.json profiling_audit.json PROFILING_EVIDENCE_AUDIT.md "$out"/
+          for f in opencv470_commit.txt opencv470_key_hashes.txt runner-provenance.txt profiling_protocol.txt profiling_run_protocol.json profile_nodes.csv profile_node_summary.csv dynamic_interaction_edges.csv dynamic_interaction_edge_summary.csv profiling_summary.json profiling_summary.txt; do
+            cp "profiling-evidence/$f" "$out/"
+          done
+          cp -r profiling-evidence/profiling_logs "$out"/
+
+      - name: Commit audited profiling evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/opencv470/instrumented_profiling
+          if git diff --cached --quiet; then
+            echo 'No profiling evidence changes to commit.'
+          else
+            git commit -m 'Publish audited OpenCV 4.7.0 profiling evidence'
+            git push
+          fi
