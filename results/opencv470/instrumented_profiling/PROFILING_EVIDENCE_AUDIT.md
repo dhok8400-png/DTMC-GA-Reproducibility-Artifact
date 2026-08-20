@@ -13,7 +13,7 @@
 - Byte-level communication measured: False
 - Parallel overlap measured: False
 - Sequential overlap by design: 0
-- profile_nodes.csv SHA-256: `1ad487bb97d3481573f9062f5af51c875e37d494cb9209a13937669b32a6d46c`
-- dynamic_interaction_edges.csv SHA-256: `647978e776d2045e0dac7e41ff6c65fed9fe787f9611e0b7969ddd95b150e2ca`
+- profile_nodes.csv SHA-256: `4cba4401b6fdb43460e8059dcb91d75925a2527d4165629275a687db66de95ae`
+- dynamic_interaction_edges.csv SHA-256: `e36c5e4c12ab6c60d20036f6ef168ac57451d16eba198be2be671dd9025cbd73`
 
 The audit confirms real instrumented call/timing/interactions evidence while preserving the boundary that byte-level communication volume and parallel overlap were not measured by this single-threaded profiling campaign.

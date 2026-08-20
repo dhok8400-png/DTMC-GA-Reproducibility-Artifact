@@ -1,2 +1,2 @@
 parent,child,observations,mean_calls,min_calls,max_calls,mean_child_total_ms,median_child_total_ms
-ROOT,parallel_for_,25,10.12,10,12,813.174,419.88
+ROOT,parallel_for_,25,10.12,10,13,728.0752,378.59

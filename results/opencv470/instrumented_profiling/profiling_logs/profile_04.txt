@@ -16,51 +16,51 @@ Note: Google Test filter = Conv.conv/0:Conv.conv/2:Conv.conv/28:Conv.conv/42:Con
 [----------] 5 tests from Conv
 [ RUN      ] Conv.conv/0, where GetParam() = (GFLOPS=3.398, K=[7 x 7], IN={1, 128, 46, 46}, OCN=128, P=[3 x 3], BIAS, OCV/CPU)
 IN=1058 Kb [ 1 128 46 46 ]    OUT=1058 Kb [ 1 128 46 46 ]    Weights(parameters): 3137 Kb    MFLOPS=3397.79
-[ PERFSTAT ]    (samples=10   mean=42.01   median=41.91   min=41.74   stddev=0.29 (0.7%))
+[ PERFSTAT ]    (samples=10   mean=37.96   median=37.83   min=37.79   stddev=0.22 (0.6%))
 [ TRACE    ]
 ROOT
-\---parallel_for_ - TC:1 C:10 T:419.88ms
+\---parallel_for_ - TC:1 C:10 T:379.50ms
 
 [/TRACE    ]
-[       OK ] Conv.conv/0 (470 ms)
+[       OK ] Conv.conv/0 (423 ms)
 [ RUN      ] Conv.conv/2, where GetParam() = (GFLOPS=23.122, K=[5 x 5], IN={1, 672, 32, 32}, OCN=672, PM=SAME, OCV/CPU)
 IN=2688 Kb [ 1 672 32 32 ]    OUT=2688 Kb [ 1 672 32 32 ]    Weights(parameters): 44100 Kb    MFLOPS=23121.8
-[ PERFSTAT ]    (samples=10   mean=287.05   median=287.06   min=285.87   stddev=0.80 (0.3%))
+[ PERFSTAT ]    (samples=13   mean=245.47   median=243.70   min=243.34   stddev=3.48 (1.4%))
 [ TRACE    ]
 ROOT
-\---parallel_for_ - TC:1 C:10 T:2870.32ms
+\---parallel_for_ - TC:1 C:13 T:3224.32ms
 
 [/TRACE    ]
-[       OK ] Conv.conv/2 (3235 ms)
+[       OK ] Conv.conv/2 (3540 ms)
 [ RUN      ] Conv.conv/28, where GetParam() = (GFLOPS=5.780, K=[5 x 5], IN={1, 672, 32, 32}, OCN=672, S=[2 x 2], PM=SAME, OCV/CPU)
 IN=2688 Kb [ 1 672 32 32 ]    OUT=672 Kb [ 1 672 16 16 ]    Weights(parameters): 44100 Kb    MFLOPS=5780.45
-[ PERFSTAT ]    (samples=10   mean=75.22   median=75.24   min=74.72   stddev=0.27 (0.4%))
+[ PERFSTAT ]    (samples=10   mean=63.68   median=63.42   min=63.31   stddev=0.65 (1.0%))
 [ TRACE    ]
 ROOT
-\---parallel_for_ - TC:1 C:10 T:752.05ms
+\---parallel_for_ - TC:1 C:10 T:636.75ms
 
 [/TRACE    ]
-[       OK ] Conv.conv/28 (904 ms)
+[       OK ] Conv.conv/28 (768 ms)
 [ RUN      ] Conv.conv/42, where GetParam() = (GFLOPS=0.177, K=[1 x 1], IN={1, 512, 26, 26}, OCN=256, OCV/CPU)
 IN=1352 Kb [ 1 512 26 26 ]    OUT=676 Kb [ 1 256 26 26 ]    Weights(parameters): 512 Kb    MFLOPS=177.382
-[ PERFSTAT ]    (samples=10   mean=2.05   median=2.04   min=2.04   stddev=0.02 (1.1%))
+[ PERFSTAT ]    (samples=10   mean=1.87   median=1.86   min=1.85   stddev=0.03 (1.8%))
 [ TRACE    ]
 ROOT
-\---parallel_for_ - TC:1 C:10 T:20.48ms
+\---parallel_for_ - TC:1 C:10 T:18.62ms
 
 [/TRACE    ]
-[       OK ] Conv.conv/42 (24 ms)
+[       OK ] Conv.conv/42 (22 ms)
 [ RUN      ] Conv.conv/69, where GetParam() = (GFLOPS=1.888, K=[3 x 3], IN={1, 1024, 10, 10}, OCN=1024, G=1024, P=[1 x 1], BIAS, OCV/CPU)
 IN=400 Kb [ 1 1024 10 10 ]    OUT=400 Kb [ 1 1024 10 10 ]    Weights(parameters): 40 Kb    MFLOPS=1887.54
-[ PERFSTAT ]    (samples=12   mean=0.22   median=0.21   min=0.21   stddev=0.01 (3.0%))
+[ PERFSTAT ]    (samples=10   mean=0.16   median=0.16   min=0.16   stddev=0.00 (2.6%))
 [ TRACE    ]
 ROOT
-\---parallel_for_ - TC:1 C:12 T:2.58ms
+\---parallel_for_ - TC:1 C:10 T:1.59ms
 
 [/TRACE    ]
-[       OK ] Conv.conv/69 (3 ms)
-[----------] 5 tests from Conv (4636 ms total)
+[       OK ] Conv.conv/69 (2 ms)
+[----------] 5 tests from Conv (4755 ms total)
 
 [----------] Global test environment tear-down
-[==========] 5 tests from 1 test case ran. (4636 ms total)
+[==========] 5 tests from 1 test case ran. (4755 ms total)
 [  PASSED  ] 5 tests.

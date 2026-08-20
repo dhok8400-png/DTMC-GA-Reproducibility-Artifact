@@ -1,5 +1,5 @@
 [ERROR:0@0.001] global persistence.cpp:505 open Can't open file: 'dnn.xml' in read mode
-[ INFO:0@0.002] global registry_parallel.impl.hpp:96 ParallelBackendRegistry core(parallel): Enabled backends(3, sorted by priority): ONETBB(1000); TBB(990); OPENMP(980)
+[ INFO:0@0.001] global registry_parallel.impl.hpp:96 ParallelBackendRegistry core(parallel): Enabled backends(3, sorted by priority): ONETBB(1000); TBB(990); OPENMP(980)
 Time compensation is 0
 TEST: Skip tests with tags: 'mem_6gb', 'verylong'
 CTEST_FULL_OUTPUT
@@ -16,51 +16,51 @@ Note: Google Test filter = Conv.conv/0:Conv.conv/2:Conv.conv/28:Conv.conv/42:Con
 [----------] 5 tests from Conv
 [ RUN      ] Conv.conv/0, where GetParam() = (GFLOPS=3.398, K=[7 x 7], IN={1, 128, 46, 46}, OCN=128, P=[3 x 3], BIAS, OCV/CPU)
 IN=1058 Kb [ 1 128 46 46 ]    OUT=1058 Kb [ 1 128 46 46 ]    Weights(parameters): 3137 Kb    MFLOPS=3397.79
-[ PERFSTAT ]    (samples=38   mean=42.46   median=42.07   min=41.86   stddev=1.04 (2.4%))
+[ PERFSTAT ]    (samples=63   mean=38.29   median=37.83   min=37.76   stddev=1.06 (2.8%))
 [ TRACE    ]
 ROOT
-\---parallel_for_ - TC:1 C:38 T:1685.68ms
+\---parallel_for_ - TC:1 C:63 T:2453.62ms
 
 [/TRACE    ]
-[       OK ] Conv.conv/0 (1736 ms)
+[       OK ] Conv.conv/0 (2499 ms)
 [ RUN      ] Conv.conv/2, where GetParam() = (GFLOPS=23.122, K=[5 x 5], IN={1, 672, 32, 32}, OCN=672, PM=SAME, OCV/CPU)
 IN=2688 Kb [ 1 672 32 32 ]    OUT=2688 Kb [ 1 672 32 32 ]    Weights(parameters): 44100 Kb    MFLOPS=23121.8
-[ PERFSTAT ]    (samples=10   mean=288.57   median=288.71   min=286.94   stddev=0.99 (0.3%))
+[ PERFSTAT ]    (samples=10   mean=243.76   median=243.37   min=243.01   stddev=0.78 (0.3%))
 [ TRACE    ]
 ROOT
-\---parallel_for_ - TC:1 C:10 T:2885.46ms
+\---parallel_for_ - TC:1 C:10 T:2437.49ms
 
 [/TRACE    ]
-[       OK ] Conv.conv/2 (3251 ms)
+[       OK ] Conv.conv/2 (2757 ms)
 [ RUN      ] Conv.conv/28, where GetParam() = (GFLOPS=5.780, K=[5 x 5], IN={1, 672, 32, 32}, OCN=672, S=[2 x 2], PM=SAME, OCV/CPU)
 IN=2688 Kb [ 1 672 32 32 ]    OUT=672 Kb [ 1 672 16 16 ]    Weights(parameters): 44100 Kb    MFLOPS=5780.45
-[ PERFSTAT ]    (samples=13   mean=75.47   median=75.49   min=74.74   stddev=0.39 (0.5%))
+[ PERFSTAT ]    (samples=10   mean=63.52   median=63.53   min=63.41   stddev=0.09 (0.1%))
 [ TRACE    ]
 ROOT
-\---parallel_for_ - TC:1 C:13 T:988.98ms
+\---parallel_for_ - TC:1 C:10 T:635.07ms
 
 [/TRACE    ]
-[       OK ] Conv.conv/28 (1140 ms)
+[       OK ] Conv.conv/28 (764 ms)
 [ RUN      ] Conv.conv/42, where GetParam() = (GFLOPS=0.177, K=[1 x 1], IN={1, 512, 26, 26}, OCN=256, OCV/CPU)
 IN=1352 Kb [ 1 512 26 26 ]    OUT=676 Kb [ 1 256 26 26 ]    Weights(parameters): 512 Kb    MFLOPS=177.382
-[ PERFSTAT ]    (samples=10   mean=2.07   median=2.06   min=2.05   stddev=0.02 (0.8%))
+[ PERFSTAT ]    (samples=10   mean=1.87   median=1.85   min=1.84   stddev=0.03 (1.9%))
 [ TRACE    ]
 ROOT
-\---parallel_for_ - TC:1 C:10 T:20.63ms
+\---parallel_for_ - TC:1 C:10 T:18.61ms
 
 [/TRACE    ]
-[       OK ] Conv.conv/42 (24 ms)
+[       OK ] Conv.conv/42 (22 ms)
 [ RUN      ] Conv.conv/69, where GetParam() = (GFLOPS=1.888, K=[3 x 3], IN={1, 1024, 10, 10}, OCN=1024, G=1024, P=[1 x 1], BIAS, OCV/CPU)
 IN=400 Kb [ 1 1024 10 10 ]    OUT=400 Kb [ 1 1024 10 10 ]    Weights(parameters): 40 Kb    MFLOPS=1887.54
-[ PERFSTAT ]    (samples=13   mean=0.22   median=0.22   min=0.21   stddev=0.00 (1.3%))
+[ PERFSTAT ]    (samples=10   mean=0.16   median=0.16   min=0.16   stddev=0.00 (1.5%))
 [ TRACE    ]
 ROOT
-\---parallel_for_ - TC:1 C:13 T:2.82ms
+\---parallel_for_ - TC:1 C:10 T:1.57ms
 
 [/TRACE    ]
-[       OK ] Conv.conv/69 (4 ms)
-[----------] 5 tests from Conv (6155 ms total)
+[       OK ] Conv.conv/69 (2 ms)
+[----------] 5 tests from Conv (6044 ms total)
 
 [----------] Global test environment tear-down
-[==========] 5 tests from 1 test case ran. (6155 ms total)
+[==========] 5 tests from 1 test case ran. (6044 ms total)
 [  PASSED  ] 5 tests.
