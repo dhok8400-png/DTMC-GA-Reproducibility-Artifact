@@ -1,0 +1,3 @@
+class_id,local_time,entry,instrumented_label,node_kind
+N01,0.0,true,ROOT,structural
+N02,0.7280752,false,parallel_for_,metric

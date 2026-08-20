@@ -1,0 +1,3 @@
+# Empirical OpenCV DTMC Adapter Provenance
+
+The adapter uses executed OpenCV 4.7.0 instrumentation evidence only. Metric-bearing labels provide inclusive node timing. Observed parent-child trace relations provide edge weights. Structural parents present in the raw trace but absent from metric-bearing rows (for example ROOT) are preserved as structural graph nodes with local_time=0.0; no timing is invented for them. Communication cost is fixed to zero because no byte-level IPC was measured in the one-process target, and tgap is fixed to zero with asynchronous eligibility disabled because the profiling campaign is sequential. These are explicit evidence boundaries rather than inferred measurements.

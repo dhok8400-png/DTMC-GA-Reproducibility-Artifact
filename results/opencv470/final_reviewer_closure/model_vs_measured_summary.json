@@ -1,0 +1,24 @@
+{
+  "exact_opencv_commit": "725e440d278aca07d35a5e8963ef990572b07316",
+  "empirical_units": 2,
+  "empirical_edges": 1,
+  "metric_node_count": 1,
+  "structural_node_count": 1,
+  "structural_nodes": [
+    "ROOT"
+  ],
+  "dtmc_horizon": 100,
+  "ga_seeds": 30,
+  "modeled_speedup_mean": 1.0,
+  "modeled_speedup_median": 1.0,
+  "modeled_speedup_sample_sd": 0.0,
+  "measured_native_parallel_speedup_ratio_of_means": 1.8690681791195096,
+  "signed_prediction_error_percent": -46.497403830871214,
+  "absolute_prediction_error_percent": 46.497403830871214,
+  "structural_node_timing_provenance": "Structural trace-only parents such as ROOT have no metric-bearing TC/T line; their local_time is therefore fixed to 0.0 rather than inferred.",
+  "communication_cost_provenance": "0.0 in this OpenCV calibration adapter because the profiled DNN calls execute in one process/shared address space and no byte-level IPC cost was measured; no byte volume is inferred.",
+  "overlap_gap_provenance": "tgap=0.0 and async_eligible=false because the profiling campaign is intentionally single-threaded; parallel overlap is not inferred from sequential traces.",
+  "timing_provenance": "Mean inclusive instrumented node time from five official OpenCV ENABLE_INSTRUMENTATION profiling runs for metric-bearing nodes only.",
+  "call_count_provenance": "Mean observed dynamic child-call count from the same five instrumented runs.",
+  "measurement_boundary": "The measured comparator is OpenCV native threaded execution on the identical fixed workload. It is an external real-runtime calibration of modeled-speedup magnitude, not a DTMC-GA-generated source rewrite."
+}
