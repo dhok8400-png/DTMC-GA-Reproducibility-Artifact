@@ -1,4 +1,4 @@
-[ERROR:0@0.002] global persistence.cpp:505 open Can't open file: 'dnn.xml' in read mode
+[ERROR:0@0.001] global persistence.cpp:505 open Can't open file: 'dnn.xml' in read mode
 [ INFO:0@0.002] global registry_parallel.impl.hpp:96 ParallelBackendRegistry core(parallel): Enabled backends(3, sorted by priority): ONETBB(1000); TBB(990); OPENMP(980)
 Time compensation is 0
 TEST: Skip tests with tags: 'mem_6gb', 'verylong'
@@ -9,58 +9,58 @@ Build type: RelWithDebInfo
 WARNING: build value differs from runtime: Release
 Compiler: /usr/bin/c++  (ver 11.4.0)
 Parallel framework: pthreads (nthreads=1)
-CPU features: SSE SSE2 SSE3 *SSE4.1 *SSE4.2 *FP16 *AVX *AVX2 *AVX512-SKX?
+CPU features: SSE SSE2 SSE3 *SSE4.1 *SSE4.2 *FP16 *AVX *AVX2 *AVX512-SKX
 Note: Google Test filter = Conv.conv/0:Conv.conv/2:Conv.conv/28:Conv.conv/42:Conv.conv/69
 [==========] Running 5 tests from 1 test case.
 [----------] Global test environment set-up.
 [----------] 5 tests from Conv
 [ RUN      ] Conv.conv/0, where GetParam() = (GFLOPS=3.398, K=[7 x 7], IN={1, 128, 46, 46}, OCN=128, P=[3 x 3], BIAS, OCV/CPU)
 IN=1058 Kb [ 1 128 46 46 ]    OUT=1058 Kb [ 1 128 46 46 ]    Weights(parameters): 3137 Kb    MFLOPS=3397.79
-[ PERFSTAT ]    (samples=10   mean=45.20   median=45.11   min=44.84   stddev=0.39 (0.9%))
+[ PERFSTAT ]    (samples=10   mean=41.94   median=41.86   min=41.77   stddev=0.31 (0.7%))
 [ TRACE    ]
 ROOT
-\---parallel_for_ - TC:1 C:10 T:451.78ms
+\---parallel_for_ - TC:1 C:10 T:419.17ms
 
 [/TRACE    ]
-[       OK ] Conv.conv/0 (507 ms)
+[       OK ] Conv.conv/0 (468 ms)
 [ RUN      ] Conv.conv/2, where GetParam() = (GFLOPS=23.122, K=[5 x 5], IN={1, 672, 32, 32}, OCN=672, PM=SAME, OCV/CPU)
 IN=2688 Kb [ 1 672 32 32 ]    OUT=2688 Kb [ 1 672 32 32 ]    Weights(parameters): 44100 Kb    MFLOPS=23121.8
-[ PERFSTAT ]    (samples=10   mean=311.59   median=309.68   min=308.87   stddev=3.75 (1.2%))
+[ PERFSTAT ]    (samples=10   mean=287.09   median=286.82   min=285.60   stddev=1.25 (0.4%))
 [ TRACE    ]
 ROOT
-\---parallel_for_ - TC:1 C:10 T:3115.58ms
+\---parallel_for_ - TC:1 C:10 T:2870.70ms
 
 [/TRACE    ]
-[       OK ] Conv.conv/2 (3529 ms)
+[       OK ] Conv.conv/2 (3234 ms)
 [ RUN      ] Conv.conv/28, where GetParam() = (GFLOPS=5.780, K=[5 x 5], IN={1, 672, 32, 32}, OCN=672, S=[2 x 2], PM=SAME, OCV/CPU)
 IN=2688 Kb [ 1 672 32 32 ]    OUT=672 Kb [ 1 672 16 16 ]    Weights(parameters): 44100 Kb    MFLOPS=5780.45
-[ PERFSTAT ]    (samples=10   mean=82.04   median=82.00   min=81.37   stddev=0.41 (0.5%))
+[ PERFSTAT ]    (samples=10   mean=75.05   median=75.10   min=74.55   stddev=0.24 (0.3%))
 [ TRACE    ]
 ROOT
-\---parallel_for_ - TC:1 C:10 T:820.15ms
+\---parallel_for_ - TC:1 C:10 T:750.26ms
 
 [/TRACE    ]
-[       OK ] Conv.conv/28 (1004 ms)
+[       OK ] Conv.conv/28 (902 ms)
 [ RUN      ] Conv.conv/42, where GetParam() = (GFLOPS=0.177, K=[1 x 1], IN={1, 512, 26, 26}, OCN=256, OCV/CPU)
 IN=1352 Kb [ 1 512 26 26 ]    OUT=676 Kb [ 1 256 26 26 ]    Weights(parameters): 512 Kb    MFLOPS=177.382
-[ PERFSTAT ]    (samples=13   mean=2.30   median=2.29   min=2.26   stddev=0.04 (1.7%))
+[ PERFSTAT ]    (samples=10   mean=2.05   median=2.04   min=2.04   stddev=0.03 (1.2%))
 [ TRACE    ]
 ROOT
-\---parallel_for_ - TC:1 C:13 T:30.13ms
+\---parallel_for_ - TC:1 C:10 T:20.50ms
 
 [/TRACE    ]
-[       OK ] Conv.conv/42 (34 ms)
+[       OK ] Conv.conv/42 (24 ms)
 [ RUN      ] Conv.conv/69, where GetParam() = (GFLOPS=1.888, K=[3 x 3], IN={1, 1024, 10, 10}, OCN=1024, G=1024, P=[1 x 1], BIAS, OCV/CPU)
 IN=400 Kb [ 1 1024 10 10 ]    OUT=400 Kb [ 1 1024 10 10 ]    Weights(parameters): 40 Kb    MFLOPS=1887.54
-[ PERFSTAT ]    (samples=10   mean=0.22   median=0.21   min=0.21   stddev=0.00 (2.3%))
+[ PERFSTAT ]    (samples=10   mean=0.22   median=0.22   min=0.21   stddev=0.01 (2.9%))
 [ TRACE    ]
 ROOT
-\---parallel_for_ - TC:1 C:10 T:2.13ms
+\---parallel_for_ - TC:1 C:10 T:2.17ms
 
 [/TRACE    ]
 [       OK ] Conv.conv/69 (3 ms)
-[----------] 5 tests from Conv (5077 ms total)
+[----------] 5 tests from Conv (4631 ms total)
 
 [----------] Global test environment tear-down
-[==========] 5 tests from 1 test case ran. (5078 ms total)
+[==========] 5 tests from 1 test case ran. (4631 ms total)
 [  PASSED  ] 5 tests.
