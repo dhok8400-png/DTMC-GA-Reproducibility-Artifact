@@ -1,0 +1,13 @@
+{
+  "exact_commit": "725e440d278aca07d35a5e8963ef990572b07316",
+  "target_file": "opencv-src/modules/dnn/src/layers/convolution_layer.cpp",
+  "hazard_families": {
+    "aliasing": true,
+    "mutable_side_effects": true,
+    "lifetime_release": true,
+    "error_control_flow": true
+  },
+  "policy": "fail-closed",
+  "production_transformation_applied": false,
+  "reason": "The real target contains unresolved aliasing/state/lifetime/error-order hazards; the conservative policy rejects source displacement rather than forcing an unsafe rewrite."
+}

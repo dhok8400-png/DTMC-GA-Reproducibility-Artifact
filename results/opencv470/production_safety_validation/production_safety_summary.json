@@ -1,0 +1,19 @@
+{
+  "exact_commit": "725e440d278aca07d35a5e8963ef990572b07316",
+  "target_file": "opencv-src/modules/dnn/src/layers/convolution_layer.cpp",
+  "hazard_families": {
+    "aliasing": true,
+    "mutable_side_effects": true,
+    "lifetime_release": true,
+    "error_control_flow": true
+  },
+  "policy": "fail-closed",
+  "production_transformation_applied": false,
+  "reason": "The real target contains unresolved aliasing/state/lifetime/error-order hazards; the conservative policy rejects source displacement rather than forcing an unsafe rewrite.",
+  "sanitizer_build": "PASS",
+  "sanitizer_runs": 3,
+  "sanitizer_runtime_findings": 0,
+  "source_hash_unchanged": true,
+  "safety_outcome": "PASS_FAIL_CLOSED_IDENTITY",
+  "interpretation": "On the audited OpenCV DNN production target, unresolved hazards cause rejection of displacement. The exact unmodified production source builds and executes the fixed workload cleanly under ASan/UBSan. This is safety evidence for conservative rejection, not evidence of a successful production rewrite."
+}
