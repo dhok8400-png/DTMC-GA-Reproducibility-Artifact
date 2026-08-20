@@ -1,0 +1,39 @@
+[ERROR:0@0.001] global persistence.cpp:505 open Can't open file: 'dnn.xml' in read mode
+Time compensation is 0
+TEST: Skip tests with tags: 'mem_6gb', 'verylong'
+CTEST_FULL_OUTPUT
+OpenCV version: 4.7.0
+OpenCV VCS version: 725e440
+Build type: Release
+Compiler: /usr/bin/c++  (ver 11.4.0)
+Parallel framework: pthreads (nthreads=4)
+CPU features: SSE SSE2 SSE3 *SSE4.1 *SSE4.2 *FP16 *AVX *AVX2 *AVX512-SKX
+Note: Google Test filter = Conv.conv/0:Conv.conv/2:Conv.conv/28:Conv.conv/42:Conv.conv/69
+[==========] Running 5 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 5 tests from Conv
+[ RUN      ] Conv.conv/0, where GetParam() = (GFLOPS=3.398, K=[7 x 7], IN={1, 128, 46, 46}, OCN=128, P=[3 x 3], BIAS, OCV/CPU)
+IN=1058 Kb [ 1 128 46 46 ]    OUT=1058 Kb [ 1 128 46 46 ]    Weights(parameters): 3137 Kb    MFLOPS=3397.79
+[ PERFSTAT ]    (samples=10   mean=17.35   median=17.30   min=17.12   stddev=0.15 (0.8%))
+[       OK ] Conv.conv/0 (195 ms)
+[ RUN      ] Conv.conv/2, where GetParam() = (GFLOPS=23.122, K=[5 x 5], IN={1, 672, 32, 32}, OCN=672, PM=SAME, OCV/CPU)
+IN=2688 Kb [ 1 672 32 32 ]    OUT=2688 Kb [ 1 672 32 32 ]    Weights(parameters): 44100 Kb    MFLOPS=23121.8
+[ PERFSTAT ]    (samples=10   mean=115.92   median=115.70   min=115.42   stddev=0.78 (0.7%))
+[       OK ] Conv.conv/2 (1333 ms)
+[ RUN      ] Conv.conv/28, where GetParam() = (GFLOPS=5.780, K=[5 x 5], IN={1, 672, 32, 32}, OCN=672, S=[2 x 2], PM=SAME, OCV/CPU)
+IN=2688 Kb [ 1 672 32 32 ]    OUT=672 Kb [ 1 672 16 16 ]    Weights(parameters): 44100 Kb    MFLOPS=5780.45
+[ PERFSTAT ]    (samples=10   mean=35.20   median=35.21   min=35.03   stddev=0.08 (0.2%))
+[       OK ] Conv.conv/28 (440 ms)
+[ RUN      ] Conv.conv/42, where GetParam() = (GFLOPS=0.177, K=[1 x 1], IN={1, 512, 26, 26}, OCN=256, OCV/CPU)
+IN=1352 Kb [ 1 512 26 26 ]    OUT=676 Kb [ 1 256 26 26 ]    Weights(parameters): 512 Kb    MFLOPS=177.382
+[ PERFSTAT ]    (samples=10   mean=0.91   median=0.91   min=0.89   stddev=0.01 (1.4%))
+[       OK ] Conv.conv/42 (11 ms)
+[ RUN      ] Conv.conv/69, where GetParam() = (GFLOPS=1.888, K=[3 x 3], IN={1, 1024, 10, 10}, OCN=1024, G=1024, P=[1 x 1], BIAS, OCV/CPU)
+IN=400 Kb [ 1 1024 10 10 ]    OUT=400 Kb [ 1 1024 10 10 ]    Weights(parameters): 40 Kb    MFLOPS=1887.54
+[ PERFSTAT ]    (samples=10   mean=0.08   median=0.08   min=0.08   stddev=0.00 (1.2%))
+[       OK ] Conv.conv/69 (1 ms)
+[----------] 5 tests from Conv (1980 ms total)
+
+[----------] Global test environment tear-down
+[==========] 5 tests from 1 test case ran. (1981 ms total)
+[  PASSED  ] 5 tests.

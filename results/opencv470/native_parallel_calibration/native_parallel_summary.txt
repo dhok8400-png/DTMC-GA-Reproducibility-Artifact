@@ -1,0 +1,14 @@
+n_pairs: 30
+parallel_threads: 4
+t1_mean_s: 4.010011707066667
+t1_median_s: 3.9526583115
+t1_sample_sd_s: 0.21697750054627837
+parallel_mean_s: 2.1454603699666666
+parallel_median_s: 2.032721321
+parallel_sample_sd_s: 0.3765178290689251
+ratio_of_means_speedup: 1.8690681791195096
+paired_speedup_mean: 1.9055301643289022
+paired_speedup_median: 1.9436559003372538
+paired_speedup_sample_sd: 0.24192752481096574
+all_exit_codes_zero: True
+interpretation: Measured native OpenCV parallel calibration; not a generated DTMC-GA rewrite.

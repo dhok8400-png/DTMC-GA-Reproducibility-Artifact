@@ -1,0 +1,190 @@
+Time compensation is 0
+Conv.
+  conv/0  # GetParam() = (GFLOPS=3.398, K=[7 x 7], IN={1, 128, 46, 46}, OCN=128, P=[3 x 3], BIAS, OCV/CPU)
+  conv/1  # GetParam() = (GFLOPS=16.987, K=[5 x 5], IN={1, 1152, 16, 16}, OCN=1152, PM=SAME, OCV/CPU)
+  conv/2  # GetParam() = (GFLOPS=23.122, K=[5 x 5], IN={1, 672, 32, 32}, OCN=672, PM=SAME, OCV/CPU)
+  conv/3  # GetParam() = (GFLOPS=9.987, K=[3 x 3], IN={1, 256, 92, 92}, OCN=256, P=[1 x 1], BIAS, OCV/CPU)
+  conv/4  # GetParam() = (GFLOPS=1.595, K=[3 x 3], IN={1, 256, 26, 26}, OCN=512, P=[1 x 1], OCV/CPU)
+  conv/5  # GetParam() = (GFLOPS=4.566, K=[7 x 7], IN={1, 172, 46, 46}, OCN=128, P=[3 x 3], BIAS, OCV/CPU)
+  conv/6  # GetParam() = (GFLOPS=1.596, K=[3 x 3], IN={1, 128, 52, 52}, OCN=256, P=[1 x 1], OCV/CPU)
+  conv/7  # GetParam() = (GFLOPS=1.595, K=[3 x 3], IN={1, 512, 13, 13}, OCN=1024, P=[1 x 1], OCV/CPU)
+  conv/8  # GetParam() = (GFLOPS=6.814, K=[3 x 3], IN={1, 512, 38, 38}, OCN=512, P=[1 x 1], BIAS, OCV/CPU)
+  conv/9  # GetParam() = (GFLOPS=6.637, K=[3 x 3], IN={1, 256, 75, 75}, OCN=256, P=[1 x 1], BIAS, OCV/CPU)
+  conv/10  # GetParam() = (GFLOPS=11.797, K=[5 x 5], IN={1, 240, 64, 64}, OCN=240, PM=SAME, OCV/CPU)
+  conv/11  # GetParam() = (GFLOPS=11.797, K=[5 x 5], IN={1, 480, 32, 32}, OCN=480, PM=SAME, OCV/CPU)
+  conv/12  # GetParam() = (GFLOPS=10.701, K=[3 x 3], IN={1, 512, 38, 38}, OCN=804, P=[1 x 1], BIAS, OCV/CPU)
+  conv/13  # GetParam() = (GFLOPS=10.087, K=[3 x 3], IN={1, 576, 38, 50}, OCN=512, PM=SAME, BIAS, OCV/CPU)
+  conv/14  # GetParam() = (GFLOPS=9.993, K=[3 x 3], IN={1, 64, 368, 368}, OCN=64, P=[1 x 1], BIAS, OCV/CPU)
+  conv/15  # GetParam() = (GFLOPS=9.989, K=[3 x 3], IN={1, 128, 184, 184}, OCN=128, P=[1 x 1], BIAS, OCV/CPU)
+  conv/16  # GetParam() = (GFLOPS=9.986, K=[3 x 3], IN={1, 512, 46, 46}, OCN=512, P=[1 x 1], BIAS, OCV/CPU)
+  conv/17  # GetParam() = (GFLOPS=1.704, K=[3 x 3], IN={1, 512, 19, 19}, OCN=512, G=512, P=[1 x 1], BIAS, OCV/CPU)
+  conv/18  # GetParam() = (GFLOPS=1.704, K=[3 x 3], IN={1, 512, 19, 19}, OCN=512, PM=SAME, OCV/CPU)
+  conv/19  # GetParam() = (GFLOPS=4.247, K=[3 x 3], IN={1, 480, 32, 32}, OCN=480, PM=SAME, OCV/CPU)
+  conv/20  # GetParam() = (GFLOPS=8.025, K=[3 x 3], IN={1, 1024, 19, 19}, OCN=1206, P=[1 x 1], BIAS, OCV/CPU)
+  conv/21  # GetParam() = (GFLOPS=0.798, K=[3 x 3], IN={1, 128, 52, 52}, OCN=128, P=[1 x 1], OCV/CPU)
+  conv/22  # GetParam() = (GFLOPS=0.798, K=[3 x 3], IN={1, 256, 26, 26}, OCN=256, P=[1 x 1], OCV/CPU)
+  conv/23  # GetParam() = (GFLOPS=6.641, K=[3 x 3], IN={1, 64, 300, 300}, OCN=64, P=[1 x 1], BIAS, OCV/CPU)
+  conv/24  # GetParam() = (GFLOPS=6.641, K=[3 x 3], IN={1, 64, 150, 200}, OCN=192, PM=SAME, BIAS, OCV/CPU)
+  conv/25  # GetParam() = (GFLOPS=6.638, K=[3 x 3], IN={1, 128, 150, 150}, OCN=128, P=[1 x 1], BIAS, OCV/CPU)
+  conv/26  # GetParam() = (GFLOPS=6.118, K=[3 x 3], IN={1, 144, 128, 128}, OCN=144, PM=SAME, OCV/CPU)
+  conv/27  # GetParam() = (GFLOPS=6.116, K=[3 x 3], IN={1, 1152, 16, 16}, OCN=1152, PM=SAME, OCV/CPU)
+  conv/28  # GetParam() = (GFLOPS=5.780, K=[5 x 5], IN={1, 672, 32, 32}, OCN=672, S=[2 x 2], PM=SAME, OCV/CPU)
+  conv/29  # GetParam() = (GFLOPS=1.704, K=[3 x 3], IN={1, 512, 19, 19}, OCN=512, P=[1 x 1], BIAS, OCV/CPU)
+  conv/30  # GetParam() = (GFLOPS=4.997, K=[3 x 3], IN={1, 64, 184, 184}, OCN=128, P=[1 x 1], BIAS, OCV/CPU)
+  conv/31  # GetParam() = (GFLOPS=4.994, K=[3 x 3], IN={1, 128, 92, 92}, OCN=256, P=[1 x 1], BIAS, OCV/CPU)
+  conv/32  # GetParam() = (GFLOPS=4.993, K=[3 x 3], IN={1, 256, 46, 46}, OCN=512, P=[1 x 1], BIAS, OCV/CPU)
+  conv/33  # GetParam() = (GFLOPS=4.993, K=[3 x 3], IN={1, 512, 46, 46}, OCN=256, P=[1 x 1], BIAS, OCV/CPU)
+  conv/34  # GetParam() = (GFLOPS=1.659, K=[3 x 3], IN={1, 960, 10, 10}, OCN=960, PM=SAME, OCV/CPU)
+  conv/35  # GetParam() = (GFLOPS=2.156, K=[3 x 3], IN={1, 576, 19, 19}, OCN=576, PM=SAME, OCV/CPU)
+  conv/36  # GetParam() = (GFLOPS=4.247, K=[5 x 5], IN={1, 144, 128, 128}, OCN=144, S=[2 x 2], PM=SAME, OCV/CPU)
+  conv/37  # GetParam() = (GFLOPS=0.798, K=[3 x 3], IN={1, 512, 13, 13}, OCN=512, P=[1 x 1], OCV/CPU)
+  conv/38  # GetParam() = (GFLOPS=0.958, K=[3 x 3], IN={1, 384, 19, 19}, OCN=384, PM=SAME, OCV/CPU)
+  conv/39  # GetParam() = (GFLOPS=0.624, K=[3 x 3], IN={1, 128, 46, 46}, OCN=128, P=[1 x 1], BIAS, OCV/CPU)
+  conv/40  # GetParam() = (GFLOPS=3.408, K=[3 x 3], IN={1, 256, 38, 38}, OCN=512, P=[1 x 1], BIAS, OCV/CPU)
+  conv/41  # GetParam() = (GFLOPS=3.407, K=[3 x 3], IN={1, 512, 19, 19}, OCN=1024, D=[6 x 6], P=[6 x 6], BIAS, OCV/CPU)
+  conv/42  # GetParam() = (GFLOPS=0.177, K=[1 x 1], IN={1, 512, 26, 26}, OCN=256, OCV/CPU)
+  conv/43  # GetParam() = (GFLOPS=0.302, K=[3 x 3], IN={1, 64, 64, 64}, OCN=64, PM=SAME, OCV/CPU)
+  conv/44  # GetParam() = (GFLOPS=3.321, K=[3 x 3], IN={1, 64, 150, 150}, OCN=128, P=[1 x 1], BIAS, OCV/CPU)
+  conv/45  # GetParam() = (GFLOPS=0.830, K=[3 x 3], IN={1, 64, 75, 100}, OCN=96, PM=SAME, BIAS, OCV/CPU)
+  conv/46  # GetParam() = (GFLOPS=3.319, K=[3 x 3], IN={1, 128, 75, 75}, OCN=256, P=[1 x 1], BIAS, OCV/CPU)
+  conv/47  # GetParam() = (GFLOPS=1.598, K=[3 x 3], IN={1, 32, 416, 416}, OCN=64, S=[2 x 2], P=[1 x 1], OCV/CPU)
+  conv/48  # GetParam() = (GFLOPS=1.598, K=[3 x 3], IN={1, 32, 208, 208}, OCN=64, P=[1 x 1], OCV/CPU)
+  conv/49  # GetParam() = (GFLOPS=1.596, K=[3 x 3], IN={1, 64, 208, 208}, OCN=128, S=[2 x 2], P=[1 x 1], OCV/CPU)
+  conv/50  # GetParam() = (GFLOPS=1.596, K=[3 x 3], IN={1, 64, 104, 104}, OCN=128, P=[1 x 1], OCV/CPU)
+  conv/51  # GetParam() = (GFLOPS=1.596, K=[3 x 3], IN={1, 128, 104, 104}, OCN=256, S=[2 x 2], P=[1 x 1], OCV/CPU)
+  conv/52  # GetParam() = (GFLOPS=1.595, K=[3 x 3], IN={1, 256, 52, 52}, OCN=512, S=[2 x 2], P=[1 x 1], OCV/CPU)
+  conv/53  # GetParam() = (GFLOPS=1.595, K=[3 x 3], IN={1, 512, 26, 26}, OCN=1024, S=[2 x 2], P=[1 x 1], OCV/CPU)
+  conv/54  # GetParam() = (GFLOPS=0.178, K=[1 x 1], IN={1, 256, 52, 52}, OCN=128, OCV/CPU)
+  conv/55  # GetParam() = (GFLOPS=2.719, K=[3 x 3], IN={1, 96, 256, 256}, OCN=96, S=[2 x 2], PM=SAME, OCV/CPU)
+  conv/56  # GetParam() = (GFLOPS=0.177, K=[1 x 1], IN={1, 1024, 13, 13}, OCN=512, OCV/CPU)
+  conv/57  # GetParam() = (GFLOPS=1.245, K=[3 x 3], IN={1, 96, 75, 100}, OCN=96, PM=SAME, BIAS, OCV/CPU)
+  conv/58  # GetParam() = (GFLOPS=0.798, K=[3 x 3], IN={1, 64, 104, 104}, OCN=64, P=[1 x 1], OCV/CPU)
+  conv/59  # GetParam() = (GFLOPS=0.472, K=[3 x 3], IN={1, 256, 20, 20}, OCN=256, PM=SAME, OCV/CPU)
+  conv/60  # GetParam() = (GFLOPS=2.255, K=[3 x 3], IN={1, 128, 80, 100}, OCN=128, BIAS, OCV/CPU)
+  conv/61  # GetParam() = (GFLOPS=2.153, K=[3 x 3], IN={1, 128, 78, 98}, OCN=128, BIAS, OCV/CPU)
+  conv/62  # GetParam() = (GFLOPS=2.100, K=[3 x 3], IN={1, 144, 75, 75}, OCN=144, PM=SAME, OCV/CPU)
+  conv/63  # GetParam() = (GFLOPS=2.052, K=[3 x 3], IN={1, 128, 76, 96}, OCN=128, BIAS, OCV/CPU)
+  conv/64  # GetParam() = (GFLOPS=1.022, K=[3 x 3], IN={1, 576, 19, 19}, OCN=273, PM=SAME, BIAS, OCV/CPU)
+  conv/65  # GetParam() = (GFLOPS=1.995, K=[9 x 9], IN={1, 3, 320, 400}, OCN=32, P=[4 x 4], BIAS, OCV/CPU)
+  conv/66  # GetParam() = (GFLOPS=1.954, K=[3 x 3], IN={1, 128, 74, 94}, OCN=128, BIAS, OCV/CPU)
+  conv/67  # GetParam() = (GFLOPS=0.958, K=[3 x 3], IN={1, 192, 38, 38}, OCN=192, PM=SAME, OCV/CPU)
+  conv/68  # GetParam() = (GFLOPS=1.888, K=[3 x 3], IN={1, 1024, 10, 10}, OCN=1024, PM=SAME, OCV/CPU)
+  conv/69  # GetParam() = (GFLOPS=1.888, K=[3 x 3], IN={1, 1024, 10, 10}, OCN=1024, G=1024, P=[1 x 1], BIAS, OCV/CPU)
+  conv/70  # GetParam() = (GFLOPS=1.859, K=[3 x 3], IN={1, 128, 72, 92}, OCN=128, BIAS, OCV/CPU)
+  conv/71  # GetParam() = (GFLOPS=1.766, K=[3 x 3], IN={1, 128, 70, 90}, OCN=128, BIAS, OCV/CPU)
+  conv/72  # GetParam() = (GFLOPS=1.704, K=[3 x 3], IN={1, 256, 38, 38}, OCN=256, G=256, P=[1 x 1], BIAS, OCV/CPU)
+  conv/73  # GetParam() = (GFLOPS=1.704, K=[3 x 3], IN={1, 256, 38, 38}, OCN=256, PM=SAME, OCV/CPU)
+  conv/74  # GetParam() = (GFLOPS=1.675, K=[3 x 3], IN={1, 128, 68, 88}, OCN=128, BIAS, OCV/CPU)
+  conv/75  # GetParam() = (GFLOPS=1.660, K=[3 x 3], IN={1, 128, 75, 75}, OCN=128, G=128, P=[1 x 1], BIAS, OCV/CPU)
+  conv/76  # GetParam() = (GFLOPS=1.660, K=[3 x 3], IN={1, 128, 75, 75}, OCN=128, PM=SAME, OCV/CPU)
+  conv/77  # GetParam() = (GFLOPS=1.586, K=[3 x 3], IN={1, 128, 66, 86}, OCN=128, BIAS, OCV/CPU)
+  conv/78  # GetParam() = (GFLOPS=1.500, K=[3 x 3], IN={1, 128, 64, 84}, OCN=128, BIAS, OCV/CPU)
+  conv/79  # GetParam() = (GFLOPS=1.416, K=[3 x 3], IN={1, 128, 62, 82}, OCN=128, BIAS, OCV/CPU)
+  conv/80  # GetParam() = (GFLOPS=0.472, K=[3 x 3], IN={1, 128, 40, 40}, OCN=128, PM=SAME, OCV/CPU)
+  conv/81  # GetParam() = (GFLOPS=0.472, K=[3 x 3], IN={1, 512, 10, 10}, OCN=512, PM=SAME, OCV/CPU)
+  conv/82  # GetParam() = (GFLOPS=0.280, K=[1 x 1], IN={1, 576, 38, 50}, OCN=128, PM=SAME, BIAS, OCV/CPU)
+  conv/83  # GetParam() = (GFLOPS=0.701, K=[3 x 3], IN={1, 128, 38, 50}, OCN=160, PM=SAME, BIAS, OCV/CPU)
+  conv/84  # GetParam() = (GFLOPS=0.231, K=[3 x 3], IN={1, 128, 56, 56}, OCN=32, P=[1 x 1], OCV/CPU)
+  conv/85  # GetParam() = (GFLOPS=0.231, K=[3 x 3], IN={1, 256, 14, 14}, OCN=256, P=[1 x 1], OCV/CPU)
+  conv/86  # GetParam() = (GFLOPS=0.210, K=[1 x 1], IN={1, 576, 38, 50}, OCN=96, PM=SAME, BIAS, OCV/CPU)
+  conv/87  # GetParam() = (GFLOPS=0.420, K=[3 x 3], IN={1, 96, 38, 50}, OCN=128, PM=SAME, BIAS, OCV/CPU)
+  conv/88  # GetParam() = (GFLOPS=1.261, K=[3 x 3], IN={1, 192, 38, 50}, OCN=192, PM=SAME, BIAS, OCV/CPU)
+  conv/89  # GetParam() = (GFLOPS=1.258, K=[3 x 3], IN={1, 1280, 10, 10}, OCN=546, PM=SAME, BIAS, OCV/CPU)
+  conv/90  # GetParam() = (GFLOPS=1.248, K=[3 x 3], IN={1, 256, 46, 46}, OCN=128, P=[1 x 1], BIAS, OCV/CPU)
+  conv/91  # GetParam() = (GFLOPS=1.245, K=[3 x 3], IN={1, 64, 75, 75}, OCN=192, PM=SAME, BIAS, OCV/CPU)
+  conv/92  # GetParam() = (GFLOPS=1.210, K=[3 x 3], IN={1, 32, 256, 256}, OCN=32, PM=SAME, OCV/CPU)
+  conv/93  # GetParam() = (GFLOPS=1.196, K=[3 x 3], IN={1, 384, 26, 26}, OCN=256, P=[1 x 1], OCV/CPU)
+  conv/94  # GetParam() = (GFLOPS=1.195, K=[9 x 9], IN={1, 32, 240, 320}, OCN=3, P=[4 x 4], BIAS, OCV/CPU)
+  conv/95  # GetParam() = (GFLOPS=1.182, K=[3 x 3], IN={1, 32, 320, 400}, OCN=64, S=[2 x 2], P=[1 x 1], BIAS, OCV/CPU)
+  conv/96  # GetParam() = (GFLOPS=1.181, K=[3 x 3], IN={1, 64, 160, 200}, OCN=128, S=[2 x 2], P=[1 x 1], BIAS, OCV/CPU)
+  conv/97  # GetParam() = (GFLOPS=0.561, K=[3 x 3], IN={1, 128, 38, 50}, OCN=128, PM=SAME, BIAS, OCV/CPU)
+  conv/98  # GetParam() = (GFLOPS=1.112, K=[3 x 3], IN={1, 512, 10, 10}, OCN=1206, P=[1 x 1], BIAS, OCV/CPU)
+  conv/99  # GetParam() = (GFLOPS=0.357, K=[1 x 1], IN={1, 64, 208, 208}, OCN=64, OCV/CPU)
+Conv1D.
+  conv1d/0  # GetParam() = (GFLOPS=0.000, K=[3], IN={1, 6, 10}, OCN=6, PM=VALID, BIAS, OCV/CPU)
+  conv1d/1  # GetParam() = (GFLOPS=0.000, K=[3], IN={1, 2, 19}, OCN=2, G=2, S=2, P=(1, 1), BIAS, OCV/CPU)
+  conv1d/2  # GetParam() = (GFLOPS=0.000, K=[3], IN={1, 2, 25}, OCN=2, G=2, P=(2, 2), PM=SAME, OCV/CPU)
+Conv3D.
+  conv3d/0  # GetParam() = (GFLOPS=0.027, K=[3 x 3 x 3], IN={1, 6, 10, 38, 50}, OCN=6, PM=VALID, BIAS, OCV/CPU)
+  conv3d/1  # GetParam() = (GFLOPS=0.000, K=[3 x 3 x 3], IN={1, 2, 19, 19, 19}, OCN=2, G=2, S=[2 x 2 x 2], P=(1, 1) x (1, 1) x (1, 1), BIAS, OCV/CPU)
+  conv3d/2  # GetParam() = (GFLOPS=0.001, K=[3 x 3 x 3], IN={1, 2, 25, 19, 19}, OCN=2, G=2, S=[1 x 2 x 2], P=(2, 2) x (2, 2) x (2, 2), PM=SAME, OCV/CPU)
+  conv3d/3  # GetParam() = (GFLOPS=1.343, K=[3 x 3 x 3], IN={1, 11, 9, 150, 200}, OCN=11, PM=VALID, BIAS, OCV/CPU)
+  conv3d/4  # GetParam() = (GFLOPS=0.053, K=[3 x 3 x 3], IN={1, 10, 98, 10, 10}, OCN=10, PM=SAME, OCV/CPU)
+  conv3d/5  # GetParam() = (GFLOPS=0.030, K=[5 x 5 x 5], IN={1, 6, 19, 19, 19}, OCN=6, G=2, OCV/CPU)
+  conv3d/6  # GetParam() = (GFLOPS=0.006, K=[5 x 5 x 5], IN={1, 4, 50, 19, 19}, OCN=4, S=[2 x 2 x 2], P=(1, 1) x (1, 1) x (1, 1), PM=VALID, OCV/CPU)
+  conv3d/7  # GetParam() = (GFLOPS=1.267, K=[5 x 5 x 5], IN={1, 3, 75, 75, 100}, OCN=3, PM=SAME, BIAS, OCV/CPU)
+  conv3d/8  # GetParam() = (GFLOPS=0.116, K=[5 x 5 x 5], IN={1, 2, 21, 75, 100}, OCN=2, BIAS, OCV/CPU)
+  conv3d/9  # GetParam() = (GFLOPS=0.093, K=[5 x 5 x 5], IN={1, 4, 40, 75, 75}, OCN=4, S=[2 x 2 x 2], OCV/CPU)
+  conv3d/10  # GetParam() = (GFLOPS=0.071, K=[7 x 7 x 7], IN={1, 6, 15, 19, 19}, OCN=6, S=[2 x 1 x 1], P=(3, 3) x (3, 3) x (3, 3), PM=SAME, BIAS, OCV/CPU)
+  conv3d/11  # GetParam() = (GFLOPS=0.045, K=[7 x 7 x 7], IN={1, 2, 38, 38, 38}, OCN=2, S=[1 x 2 x 1], OCV/CPU)
+  conv3d/12  # GetParam() = (GFLOPS=0.000, K=[1 x 1 x 1], IN={1, 4, 9, 10, 10}, OCN=4, S=[1 x 1 x 2], P=(1, 1) x (1, 1) x (1, 1), PM=VALID, OCV/CPU)
+  conv3d/13  # GetParam() = (GFLOPS=0.002, K=[3 x 1 x 4], IN={1, 14, 5, 10, 10}, OCN=14, PM=SAME, OCV/CPU)
+  conv3d/14  # GetParam() = (GFLOPS=0.000, K=[1 x 1 x 1], IN={1, 8, 1, 10, 10}, OCN=8, G=8, P=(1, 1) x (1, 1) x (1, 1), BIAS, OCV/CPU)
+  conv3d/15  # GetParam() = (GFLOPS=0.000, K=[3 x 4 x 2], IN={1, 4, 8, 10, 10}, OCN=4, G=4, S=[1 x 2 x 1], BIAS, OCV/CPU)
+Layer_NaryEltwise.
+  NCHW_NCHW_add/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_div/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_ref_div/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_equal/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_greater/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_less/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_max/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_ref_max/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_mean/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_min/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_ref_min/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_mul/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_ref_mul/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_pow/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_sub/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_sum/0  # GetParam() = OCV/CPU
+  NCHW_NCHW_ref_sum/0  # GetParam() = OCV/CPU
+  NCHW_C_sum/0  # GetParam() = OCV/CPU
+  NHWC_C/0  # GetParam() = OCV/CPU
+Layer_Slice.
+  YOLOv4_tiny_1/0  # GetParam() = OCV/CPU
+  YOLOv4_tiny_2/0  # GetParam() = OCV/CPU
+  YOLOv4_tiny_3/0  # GetParam() = OCV/CPU
+  FastNeuralStyle_eccv16/0  # GetParam() = OCV/CPU
+Layer_Scatter.
+  DISABLED_Scatter/0  # GetParam() = OCV/CPU
+  DISABLED_Scatter_add/0  # GetParam() = OCV/CPU
+Layer_ScatterND.
+  DISABLED_ScatterND/0  # GetParam() = OCV/CPU
+  DISABLED_ScatterND_add/0  # GetParam() = OCV/CPU
+DNNTestNetwork.
+  AlexNet/0  # GetParam() = OCV/CPU
+  GoogLeNet/0  # GetParam() = OCV/CPU
+  ResNet_50/0  # GetParam() = OCV/CPU
+  SqueezeNet_v1_1/0  # GetParam() = OCV/CPU
+  Inception_5h/0  # GetParam() = OCV/CPU
+  ENet/0  # GetParam() = OCV/CPU
+  SSD/0  # GetParam() = OCV/CPU
+  OpenFace/0  # GetParam() = OCV/CPU
+  MobileNet_SSD_Caffe/0  # GetParam() = OCV/CPU
+  MobileNet_SSD_v1_TensorFlow/0  # GetParam() = OCV/CPU
+  MobileNet_SSD_v2_TensorFlow/0  # GetParam() = OCV/CPU
+  DenseNet_121/0  # GetParam() = OCV/CPU
+  OpenPose_pose_mpi_faster_4_stages/0  # GetParam() = OCV/CPU
+  opencv_face_detector/0  # GetParam() = OCV/CPU
+  Inception_v2_SSD_TensorFlow/0  # GetParam() = OCV/CPU
+  YOLOv3/0  # GetParam() = OCV/CPU
+  YOLOv4/0  # GetParam() = OCV/CPU
+  YOLOv4_tiny/0  # GetParam() = OCV/CPU
+  EAST_text_detection/0  # GetParam() = OCV/CPU
+  FastNeuralStyle_eccv16/0  # GetParam() = OCV/CPU
+  Inception_v2_Faster_RCNN/0  # GetParam() = OCV/CPU
+  EfficientDet/0  # GetParam() = OCV/CPU
+Layer_LSTM.
+  lstm/0  # GetParam() = BATCH=1, IN=192, HIDDEN=192, TS=100
+  lstm/1  # GetParam() = BATCH=1, IN=1024, HIDDEN=192, TS=100
+  lstm/2  # GetParam() = BATCH=1, IN=64, HIDDEN=192, TS=100
+  lstm/3  # GetParam() = BATCH=1, IN=192, HIDDEN=512, TS=100
+  lstm/4  # GetParam() = BATCH=64, IN=192, HIDDEN=192, TS=2
+  lstm/5  # GetParam() = BATCH=64, IN=1024, HIDDEN=192, TS=2
+  lstm/6  # GetParam() = BATCH=64, IN=64, HIDDEN=192, TS=2
+  lstm/7  # GetParam() = BATCH=64, IN=192, HIDDEN=512, TS=2
+  lstm/8  # GetParam() = BATCH=128, IN=192, HIDDEN=192, TS=2
+  lstm/9  # GetParam() = BATCH=128, IN=1024, HIDDEN=192, TS=2
+  lstm/10  # GetParam() = BATCH=128, IN=64, HIDDEN=192, TS=2
+  lstm/11  # GetParam() = BATCH=128, IN=192, HIDDEN=512, TS=2

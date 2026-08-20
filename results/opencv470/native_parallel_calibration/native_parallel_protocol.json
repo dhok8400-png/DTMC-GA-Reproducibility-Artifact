@@ -1,0 +1,11 @@
+{
+  "exact_opencv_commit": "725e440d278aca07d35a5e8963ef990572b07316",
+  "workload": "Conv.conv/0:Conv.conv/2:Conv.conv/28:Conv.conv/42:Conv.conv/69",
+  "warmups_per_configuration": 3,
+  "timed_runs_per_configuration": 30,
+  "parallel_threads": 4,
+  "one_thread_cpuset": "0",
+  "parallel_cpuset": "0,1,2,3",
+  "measurement": "process wall-clock via time.perf_counter_ns",
+  "interpretation": "Native OpenCV threaded execution is an external runtime-calibration checkpoint; it is not a DTMC-GA-generated source transformation."
+}
