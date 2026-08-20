@@ -10,6 +10,7 @@ jobs:
   instrumented-profiling:
     runs-on: ubuntu-22.04
     timeout-minutes: 120
+
     steps:
       - name: Checkout artifact repository
         uses: actions/checkout@v4
@@ -56,7 +57,9 @@ jobs:
           } | tee runner-provenance.txt
 
       - name: Configure instrumented profile build
+        shell: bash
         run: |
+          set -euo pipefail
           cmake -S opencv-src -B build-profile -G Ninja \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_CXX_FLAGS_RELWITHDEBINFO='-O2 -g -fno-omit-frame-pointer' \
@@ -82,7 +85,9 @@ jobs:
             | tee cmake-profile.log
 
       - name: Build instrumented DNN performance target
+        shell: bash
         run: |
+          set -euo pipefail
           ninja -C build-profile -t targets | grep -E '^opencv_perf_dnn:' | tee profile-target-check.txt
           cmake --build build-profile --target opencv_perf_dnn -j2 | tee build-profile.log
           test -x build-profile/bin/opencv_perf_dnn
@@ -108,9 +113,10 @@ jobs:
           OpenCV perf controls: seed=809564, min_samples=10, force_samples=100, time_limit=3.0 s/test.
           Evidence boundary: trace nodes provide observed instrumented function labels, thread counts,
           call counts, total instrumented time, and local/global time weights. Parent-child trace edges
-          are treated as observed dynamic interaction edges. No byte-level communication volume is
-          inferred. Because the profiling run is intentionally single-threaded to match the sequential
-          baseline, inter-thread execution overlap is zero by design and is not presented as a measured
+          are accepted only when hierarchy is explicitly recoverable from OpenCV's printed trace tree
+          using branch markers or indentation. No byte-level communication volume is inferred.
+          Because the profiling run is intentionally single-threaded to match the sequential baseline,
+          inter-thread execution overlap is zero by design and is not presented as a measured
           parallel-overlap result.
           EOF
 
@@ -120,7 +126,10 @@ jobs:
           set -euo pipefail
           mkdir -p profiling_logs
           python3 - <<'PY'
-          import json, os, pathlib, subprocess
+          import json
+          import os
+          import pathlib
+          import subprocess
 
           binary = pathlib.Path('build-profile/bin/opencv_perf_dnn')
           test_filter = 'Conv.conv/0:Conv.conv/2:Conv.conv/28:Conv.conv/42:Conv.conv/69'
@@ -156,8 +165,11 @@ jobs:
           pathlib.Path('profiling_run_protocol.json').write_text(json.dumps({
               'command': cmd,
               'environment_thread_controls': {k: env[k] for k in [
-                  'OPENCV_FOR_THREADS_NUM','OMP_NUM_THREADS','OPENBLAS_NUM_THREADS',
-                  'MKL_NUM_THREADS','NUMEXPR_NUM_THREADS'
+                  'OPENCV_FOR_THREADS_NUM',
+                  'OMP_NUM_THREADS',
+                  'OPENBLAS_NUM_THREADS',
+                  'MKL_NUM_THREADS',
+                  'NUMEXPR_NUM_THREADS',
               ]},
               'cpu_affinity': affinity,
               'warmup_runs': 2,
@@ -167,14 +179,27 @@ jobs:
           for i in range(1, 3):
               log = pathlib.Path('profiling_logs') / f'warmup_{i:02d}.txt'
               with log.open('w') as f:
-                  subprocess.run(cmd, env=env, stdout=f, stderr=subprocess.STDOUT, check=True)
+                  subprocess.run(
+                      cmd,
+                      env=env,
+                      stdout=f,
+                      stderr=subprocess.STDOUT,
+                      check=True,
+                  )
 
           for i in range(1, 6):
               log = pathlib.Path('profiling_logs') / f'profile_{i:02d}.txt'
               with log.open('w') as f:
-                  cp = subprocess.run(cmd, env=env, stdout=f, stderr=subprocess.STDOUT)
+                  cp = subprocess.run(
+                      cmd,
+                      env=env,
+                      stdout=f,
+                      stderr=subprocess.STDOUT,
+                  )
               if cp.returncode != 0:
-                  raise RuntimeError(f'Profile run {i} failed with exit code {cp.returncode}; see {log}')
+                  raise RuntimeError(
+                      f'Profile run {i} failed with exit code {cp.returncode}; see {log}'
+                  )
               print(f'profile run {i:02d}: PASS', flush=True)
           PY
 
@@ -183,7 +208,11 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import csv, json, pathlib, re, statistics
+          import csv
+          import json
+          import pathlib
+          import re
+          import statistics
           from collections import defaultdict
 
           metric_re = re.compile(
@@ -191,24 +220,172 @@ jobs:
               r'(?: L:(?P<local>[0-9.]+)% G:(?P<global>[0-9.]+)%)?\s*$'
           )
 
+          # OpenCV trace trees can be printed with different ASCII/Unicode branch markers.
+          # We only create parent-child edges when hierarchy is explicitly visible either
+          # through a branch marker or through differing indentation levels.
+          branch_re = re.compile(
+              r'(?P<branch>\|---|\\---|\+---|`---|├──|└──|├─|└─)'
+          )
+
           node_rows = []
           edge_rows = []
           trace_sections = 0
+          diagnostic_metric_lines = []
+          section_diagnostics = []
 
-          for run_idx, path in enumerate(sorted(pathlib.Path('profiling_logs').glob('profile_*.txt')), start=1):
+          def split_label_and_prefix(line, match):
+              left = line[:match.start()].expandtabs(4).rstrip()
+              bm = branch_re.search(left)
+              if bm:
+                  prefix = left[:bm.start()]
+                  label = left[bm.end():].strip()
+                  return {
+                      'left': left,
+                      'prefix': prefix,
+                      'label': label,
+                      'has_branch': True,
+                      'branch': bm.group('branch'),
+                      'leading_spaces': len(prefix) - len(prefix.lstrip(' ')),
+                  }
+
+              leading_spaces = len(left) - len(left.lstrip(' '))
+              return {
+                  'left': left,
+                  'prefix': left[:leading_spaces],
+                  'label': left.strip(),
+                  'has_branch': False,
+                  'branch': '',
+                  'leading_spaces': leading_spaces,
+              }
+
+          def infer_depths(records):
+              if not records:
+                  return []
+
+              # First preference: explicit tree branch markers.  The visual prefix before
+              # the branch marker normally grows as the call tree becomes deeper.
+              explicit = [r for r in records if r['has_branch']]
+              if explicit:
+                  visual_widths = []
+                  for r in records:
+                      if r['has_branch']:
+                          # Keep spaces and tree continuation characters as visual columns.
+                          visual = r['prefix'].replace('│', '|')
+                          visual_widths.append(len(visual))
+
+                  positive_steps = sorted({w for w in visual_widths if w > 0})
+                  if positive_steps:
+                      # Derive the smallest observed indentation increment rather than
+                      # assuming that every OpenCV build uses exactly four characters.
+                      step = positive_steps[0]
+                      for a, b in zip(positive_steps, positive_steps[1:]):
+                          diff = b - a
+                          if diff > 0:
+                              step = min(step, diff)
+                  else:
+                      step = 4
+
+                  step = max(1, step)
+                  depths = []
+                  for r in records:
+                      if r['has_branch']:
+                          visual = r['prefix'].replace('│', '|')
+                          depths.append(len(visual) // step + 1)
+                      else:
+                          # A line without a branch marker can be a root node.
+                          depths.append(0)
+                  return depths
+
+              # Second preference: pure indentation.  Map the distinct indentation
+              # widths to ordinal levels (0, 1, 2, ...) instead of assuming 2 or 4 spaces.
+              indents = sorted({r['leading_spaces'] for r in records})
+              depth_map = {indent: idx for idx, indent in enumerate(indents)}
+              return [depth_map[r['leading_spaces']] for r in records]
+
+          profile_paths = sorted(pathlib.Path('profiling_logs').glob('profile_*.txt'))
+          if len(profile_paths) != 5:
+              raise RuntimeError(
+                  f'Expected 5 profiling logs, found {len(profile_paths)}'
+              )
+
+          for run_idx, path in enumerate(profile_paths, start=1):
               lines = path.read_text(errors='replace').splitlines()
               in_trace = False
-              stack = {}
+              current_section = []
+              run_sections = 0
+
+              def flush_section(section_records):
+                  nonlocal_vars = None
+                  if not section_records:
+                      return
+
+                  depths = infer_depths(section_records)
+                  stack = {}
+                  section_edge_count = 0
+
+                  for record, depth in zip(section_records, depths):
+                      parent = stack.get(depth - 1, '') if depth > 0 else ''
+                      stack[depth] = record['label']
+                      for d in list(stack):
+                          if d > depth:
+                              del stack[d]
+
+                      row = {
+                          'run': run_idx,
+                          'depth': depth,
+                          'parent': parent,
+                          'node': record['label'],
+                          'threads': record['threads'],
+                          'calls': record['calls'],
+                          'total_ms': record['total_ms'],
+                          'local_pct': record['local_pct'],
+                          'global_pct': record['global_pct'],
+                      }
+                      node_rows.append(row)
+
+                      if parent:
+                          edge_rows.append({
+                              'run': run_idx,
+                              'parent': parent,
+                              'child': record['label'],
+                              'calls': record['calls'],
+                              'child_total_ms': record['total_ms'],
+                              'child_global_pct': record['global_pct'],
+                          })
+                          section_edge_count += 1
+
+                  section_diagnostics.append({
+                      'run': run_idx,
+                      'records': len(section_records),
+                      'edges': section_edge_count,
+                      'explicit_branch_records': sum(
+                          1 for r in section_records if r['has_branch']
+                      ),
+                      'indent_levels': sorted({
+                          r['leading_spaces'] for r in section_records
+                      }),
+                      'depths': depths,
+                  })
+
               for line in lines:
-                  if line.strip() == '[ TRACE    ]':
+                  stripped = line.strip()
+
+                  if stripped == '[ TRACE    ]':
+                      if current_section:
+                          flush_section(current_section)
+                          current_section = []
                       in_trace = True
                       trace_sections += 1
-                      stack = {}
+                      run_sections += 1
                       continue
-                  if line.strip() == '[/TRACE    ]':
+
+                  if stripped == '[/TRACE    ]':
+                      if current_section:
+                          flush_section(current_section)
+                          current_section = []
                       in_trace = False
-                      stack = {}
                       continue
+
                   if not in_trace or ' - TC:' not in line:
                       continue
 
@@ -216,60 +393,107 @@ jobs:
                   if not m:
                       continue
 
-                  left = line[:m.start()]
-                  branch_pos = max(left.rfind('|---'), left.rfind('\\---'))
-                  if branch_pos >= 0:
-                      shift = left[:branch_pos]
-                      depth = len(shift) // 4 + 1
-                      label = left[branch_pos + 4:].strip()
-                  else:
-                      depth = 0
-                      label = left.strip()
-
-                  parent = stack.get(depth - 1, '') if depth > 0 else ''
-                  stack[depth] = label
-                  for d in list(stack):
-                      if d > depth:
-                          del stack[d]
-
-                  row = {
-                      'run': run_idx,
-                      'depth': depth,
-                      'parent': parent,
-                      'node': label,
+                  parsed = split_label_and_prefix(line, m)
+                  parsed.update({
                       'threads': int(m.group('threads')),
                       'calls': int(m.group('calls')),
                       'total_ms': float(m.group('ms')),
-                      'local_pct': float(m.group('local')) if m.group('local') is not None else '',
-                      'global_pct': float(m.group('global')) if m.group('global') is not None else '',
-                  }
-                  node_rows.append(row)
-                  if parent:
-                      edge_rows.append({
+                      'local_pct': (
+                          float(m.group('local'))
+                          if m.group('local') is not None
+                          else ''
+                      ),
+                      'global_pct': (
+                          float(m.group('global'))
+                          if m.group('global') is not None
+                          else ''
+                      ),
+                  })
+                  current_section.append(parsed)
+
+                  if len(diagnostic_metric_lines) < 100:
+                      diagnostic_metric_lines.append({
                           'run': run_idx,
-                          'parent': parent,
-                          'child': label,
-                          'calls': row['calls'],
-                          'child_total_ms': row['total_ms'],
-                          'child_global_pct': row['global_pct'],
+                          'raw': line,
+                          'left': parsed['left'],
+                          'label': parsed['label'],
+                          'has_branch': parsed['has_branch'],
+                          'branch': parsed['branch'],
+                          'leading_spaces': parsed['leading_spaces'],
                       })
 
+              if current_section:
+                  flush_section(current_section)
+
+              if run_sections == 0:
+                  section_diagnostics.append({
+                      'run': run_idx,
+                      'warning': 'No [ TRACE ] section markers found in this log',
+                  })
+
+          # Always write diagnostics before any hard failure.  This makes a failed
+          # GitHub Actions run inspectable through the uploaded artifact.
+          pathlib.Path('trace_metric_samples.txt').write_text(
+              '\n'.join(
+                  f"run={r['run']} branch={r['branch']!r} "
+                  f"has_branch={r['has_branch']} leading_spaces={r['leading_spaces']} "
+                  f"label={r['label']!r} raw={r['raw']!r}"
+                  for r in diagnostic_metric_lines
+              ) + ('\n' if diagnostic_metric_lines else '')
+          )
+
+          pathlib.Path('trace_parse_diagnostics.json').write_text(
+              json.dumps({
+                  'trace_sections': trace_sections,
+                  'sample_metric_line_count': len(diagnostic_metric_lines),
+                  'sections': section_diagnostics,
+              }, indent=2)
+          )
+
           if not node_rows:
-              raise RuntimeError('No instrumented trace nodes were parsed from profiling logs')
+              raise RuntimeError(
+                  'No instrumented trace nodes were parsed from profiling logs. '
+                  'Inspect trace_metric_samples.txt and the raw profiling logs.'
+              )
+
           if not edge_rows:
-              raise RuntimeError('No parent-child dynamic interaction edges were parsed')
+              print('=== FIRST PARSED METRIC LINES ===')
+              for r in diagnostic_metric_lines[:20]:
+                  print(repr(r['raw']))
+              print('=== TRACE PARSE DIAGNOSTICS ===')
+              print(pathlib.Path('trace_parse_diagnostics.json').read_text())
+              raise RuntimeError(
+                  'No parent-child dynamic interaction edges were parsed. '
+                  'The raw trace contains metric nodes but no recoverable hierarchy. '
+                  'Inspect trace_metric_samples.txt and trace_parse_diagnostics.json.'
+              )
 
           with open('profile_nodes.csv', 'w', newline='') as f:
               w = csv.DictWriter(f, fieldnames=[
-                  'run','depth','parent','node','threads','calls','total_ms','local_pct','global_pct'
+                  'run',
+                  'depth',
+                  'parent',
+                  'node',
+                  'threads',
+                  'calls',
+                  'total_ms',
+                  'local_pct',
+                  'global_pct',
               ])
-              w.writeheader(); w.writerows(node_rows)
+              w.writeheader()
+              w.writerows(node_rows)
 
           with open('dynamic_interaction_edges.csv', 'w', newline='') as f:
               w = csv.DictWriter(f, fieldnames=[
-                  'run','parent','child','calls','child_total_ms','child_global_pct'
+                  'run',
+                  'parent',
+                  'child',
+                  'calls',
+                  'child_total_ms',
+                  'child_global_pct',
               ])
-              w.writeheader(); w.writerows(edge_rows)
+              w.writeheader()
+              w.writerows(edge_rows)
 
           node_groups = defaultdict(list)
           for r in node_rows:
@@ -286,7 +510,9 @@ jobs:
                   'observations': len(rows),
                   'mean_total_ms': statistics.mean(times),
                   'median_total_ms': statistics.median(times),
-                  'sample_sd_total_ms': statistics.stdev(times) if len(times) > 1 else 0.0,
+                  'sample_sd_total_ms': (
+                      statistics.stdev(times) if len(times) > 1 else 0.0
+                  ),
                   'mean_calls': statistics.mean(calls),
                   'min_calls': min(calls),
                   'max_calls': max(calls),
@@ -295,7 +521,8 @@ jobs:
 
           with open('profile_node_summary.csv', 'w', newline='') as f:
               w = csv.DictWriter(f, fieldnames=list(node_summary[0].keys()))
-              w.writeheader(); w.writerows(node_summary)
+              w.writeheader()
+              w.writerows(node_summary)
 
           edge_groups = defaultdict(list)
           for r in edge_rows:
@@ -318,7 +545,8 @@ jobs:
 
           with open('dynamic_interaction_edge_summary.csv', 'w', newline='') as f:
               w = csv.DictWriter(f, fieldnames=list(edge_summary[0].keys()))
-              w.writeheader(); w.writerows(edge_summary)
+              w.writeheader()
+              w.writerows(edge_summary)
 
           summary = {
               'profile_runs': 5,
@@ -327,12 +555,21 @@ jobs:
               'unique_parent_node_pairs': len(node_summary),
               'parsed_edge_rows': len(edge_rows),
               'unique_parent_child_pairs': len(edge_summary),
-              'max_threads_observed': max(int(r['threads']) for r in node_rows),
+              'max_threads_observed': max(
+                  int(r['threads']) for r in node_rows
+              ),
               'communication_bytes_measured': False,
               'parallel_overlap_measured': False,
               'sequential_overlap_by_design': 0,
+              'edge_evidence_rule': (
+                  'parent-child edges accepted only from explicit trace-tree '
+                  'branch markers or distinct indentation levels'
+              ),
           }
-          pathlib.Path('profiling_summary.json').write_text(json.dumps(summary, indent=2))
+
+          pathlib.Path('profiling_summary.json').write_text(
+              json.dumps(summary, indent=2)
+          )
           pathlib.Path('profiling_summary.txt').write_text(
               '\n'.join(f'{k}: {v}' for k, v in summary.items()) + '\n'
           )
@@ -349,13 +586,17 @@ jobs:
           test -s dynamic_interaction_edges.csv
           test -s profile_node_summary.csv
           test -s dynamic_interaction_edge_summary.csv
+          test -s trace_metric_samples.txt
+          test -s trace_parse_diagnostics.json
           grep -q '"profile_runs": 5' profiling_summary.json
           cat profiling_summary.txt
 
       - name: Upload instrumented profiling evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: opencv470-instrumented-profiling
+          if-no-files-found: warn
           path: |
             opencv470_commit.txt
             opencv470_key_hashes.txt
@@ -368,6 +609,8 @@ jobs:
             profiling_protocol.txt
             profiling_run_protocol.json
             profiling_logs/
+            trace_metric_samples.txt
+            trace_parse_diagnostics.json
             profile_nodes.csv
             profile_node_summary.csv
             dynamic_interaction_edges.csv
