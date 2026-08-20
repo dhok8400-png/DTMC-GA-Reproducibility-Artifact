@@ -136,39 +136,103 @@ jobs:
           edges=pd.read_csv(root/'dynamic_interaction_edge_summary.csv')
           if nodes.empty or edges.empty: raise RuntimeError('Profiling summaries are empty')
 
-          # Aggregate identical instrumented labels. Times are inclusive instrumented times; this is recorded explicitly.
-          n=nodes.groupby('node',as_index=False).agg(local_time=('mean_total_ms','mean'), observations=('observations','sum'), mean_calls=('mean_calls','mean'))
-          labels=set(n['node'].astype(str))
-          e=edges[edges['parent'].astype(str).isin(labels) & edges['child'].astype(str).isin(labels)].copy()
-          if e.empty: raise RuntimeError('No mapped parent-child edges remain after label aggregation')
-          e=e.groupby(['parent','child'],as_index=False).agg(count=('mean_calls','mean'), child_time_ms=('mean_child_total_ms','mean'))
+          # Aggregate identical metric-bearing instrumented labels. OpenCV's trace
+          # also contains structural parents (for the current workload, ROOT) that do
+          # not carry a " - TC:" metric line. Preserve those observed structural
+          # endpoints as zero-time graph nodes rather than discarding their edges.
+          n=nodes.groupby('node',as_index=False).agg(
+              local_time=('mean_total_ms','mean'),
+              observations=('observations','sum'),
+              mean_calls=('mean_calls','mean')
+          )
+          n['node']=n['node'].astype(str)
 
-          # Restrict to the hottest connected nodes to keep the revision-time calibration auditable and bounded.
+          e0=edges.copy()
+          e0['parent']=e0['parent'].astype(str)
+          e0['child']=e0['child'].astype(str)
+          e0=e0[(e0['parent'].str.len()>0) & (e0['child'].str.len()>0)].copy()
+          if e0.empty:
+              raise RuntimeError('No observed parent-child edges are available in the profiling summary')
+
+          measured_labels=set(n['node'])
+          endpoint_labels=set(e0['parent'])|set(e0['child'])
+          structural_labels=sorted(endpoint_labels-measured_labels)
+
+          if structural_labels:
+              structural_rows=pd.DataFrame([
+                  {
+                      'node':lab,
+                      'local_time':0.0,
+                      'observations':0,
+                      'mean_calls':0.0
+                  }
+                  for lab in structural_labels
+              ])
+              n=pd.concat([n,structural_rows],ignore_index=True)
+
+          labels=set(n['node'].astype(str))
+          e=e0[e0['parent'].isin(labels) & e0['child'].isin(labels)].copy()
+          if e.empty:
+              raise RuntimeError('No mapped parent-child edges remain after structural-endpoint preservation')
+
+          e=e.groupby(['parent','child'],as_index=False).agg(
+              count=('mean_calls','mean'),
+              child_time_ms=('mean_child_total_ms','mean')
+          )
+
+          # Restrict to the hottest connected nodes to keep the revision-time
+          # calibration auditable and bounded. Structural nodes have zero local
+          # timing by design and can still be retained when required for connectivity.
           score={str(r.node):float(r.local_time) for r in n.itertuples()}
           connected=set(e['parent'].astype(str))|set(e['child'].astype(str))
-          ranked=sorted(connected,key=lambda x:score.get(x,0.0),reverse=True)
+          ranked=sorted(connected,key=lambda x:(score.get(x,0.0),x),reverse=True)
           selected=set(ranked[:24])
           e=e[e['parent'].astype(str).isin(selected)&e['child'].astype(str).isin(selected)].copy()
           selected=set(e['parent'].astype(str))|set(e['child'].astype(str))
-          if len(selected)<2: raise RuntimeError('Empirical adapter has fewer than two connected nodes')
+          if len(selected)<2:
+              raise RuntimeError('Empirical adapter has fewer than two connected nodes')
 
           ids={lab:f'N{i:02d}' for i,lab in enumerate(sorted(selected),start=1)}
           childset=set(e['child'].astype(str))
           roots=[x for x in selected if x not in childset]
-          entry=max(roots or list(selected),key=lambda x:score.get(x,0.0))
+          entry=max(roots or list(selected),key=lambda x:(score.get(x,0.0),x))
+
           classes=[]
+          structural_selected=set(structural_labels)&selected
           for lab in sorted(selected):
-              classes.append({'class_id':ids[lab],'local_time':score.get(lab,0.0)/1000.0,'entry':str(lab==entry).lower(),'instrumented_label':lab})
-          classes_df=pd.DataFrame([{k:v for k,v in r.items() if k!='instrumented_label'} for r in classes])
+              classes.append({
+                  'class_id':ids[lab],
+                  'local_time':score.get(lab,0.0)/1000.0,
+                  'entry':str(lab==entry).lower(),
+                  'instrumented_label':lab,
+                  'node_kind':'structural' if lab in structural_selected else 'metric'
+              })
+          classes_df=pd.DataFrame([
+              {k:v for k,v in r.items() if k not in {'instrumented_label','node_kind'}}
+              for r in classes
+          ])
+
           edges_rows=[]
           for r in e.itertuples():
               a=str(r.parent); b=str(r.child)
-              if a==b: continue
-              edges_rows.append({'caller':ids[a],'callee':ids[b],'count':max(float(r.count),0.0),'mode':'seq','comm_cost':0.0,'tgap':0.0,'async_eligible':False,'call_use_pair_id':f'{ids[a]}_{ids[b]}'})
+              if a==b:
+                  continue
+              edges_rows.append({
+                  'caller':ids[a],
+                  'callee':ids[b],
+                  'count':max(float(r.count),0.0),
+                  'mode':'seq',
+                  'comm_cost':0.0,
+                  'tgap':0.0,
+                  'async_eligible':False,
+                  'call_use_pair_id':f'{ids[a]}_{ids[b]}'
+              })
           edges_df=pd.DataFrame(edges_rows)
-          if edges_df.empty: raise RuntimeError('Empirical edge table is empty after self-loop removal')
+          if edges_df.empty:
+              raise RuntimeError('Empirical edge table is empty after self-loop removal')
 
-          out=pathlib.Path('results/opencv470/final_reviewer_closure'); out.mkdir(parents=True,exist_ok=True)
+          out=pathlib.Path('results/opencv470/final_reviewer_closure')
+          out.mkdir(parents=True,exist_ok=True)
           classes_df.to_csv(out/'empirical_classes.csv',index=False)
           edges_df.to_csv(out/'empirical_edges.csv',index=False)
           pd.DataFrame(classes).to_csv(out/'empirical_node_mapping.csv',index=False)
@@ -182,30 +246,65 @@ jobs:
           run_rows=[]
           max_modules=min(3,len(classes_df))
           for seed in range(1,31):
-              res=optimize(classes_df,edges_df,visits,algorithm='DTMC-GA',seed=seed,max_modules=max_modules,population_size=12,generations=8)
-              run_rows.append({'seed':seed,'modeled_speedup':res.metrics['predicted_speedup'],'modeled_parallel_runtime':res.metrics['parallel_runtime_s'],'modeled_sequential_runtime':res.metrics['sequential_runtime_s'],'modules':res.metrics['modules'],'cross_edges':res.metrics['cross_edges'],'optimizer_runtime_s':res.runtime_s,'partition_json':json.dumps(res.partition,sort_keys=True)})
+              res=optimize(
+                  classes_df,edges_df,visits,
+                  algorithm='DTMC-GA',
+                  seed=seed,
+                  max_modules=max_modules,
+                  population_size=12,
+                  generations=8
+              )
+              run_rows.append({
+                  'seed':seed,
+                  'modeled_speedup':res.metrics['predicted_speedup'],
+                  'modeled_parallel_runtime':res.metrics['parallel_runtime_s'],
+                  'modeled_sequential_runtime':res.metrics['sequential_runtime_s'],
+                  'modules':res.metrics['modules'],
+                  'cross_edges':res.metrics['cross_edges'],
+                  'optimizer_runtime_s':res.runtime_s,
+                  'partition_json':json.dumps(res.partition,sort_keys=True)
+              })
           pd.DataFrame(run_rows).to_csv(out/'dtmc_ga_empirical_30seeds.csv',index=False)
+
           vals=[r['modeled_speedup'] for r in run_rows]
           native=json.load(open('results/opencv470/native_parallel_calibration/native_parallel_summary.json'))
           measured=float(native['ratio_of_means_speedup'])
           modeled=statistics.mean(vals)
+
           summary={
-            'exact_opencv_commit':'725e440d278aca07d35a5e8963ef990572b07316',
-            'empirical_units':len(classes_df),'empirical_edges':len(edges_df),'dtmc_horizon':100,'ga_seeds':30,
-            'modeled_speedup_mean':modeled,'modeled_speedup_median':statistics.median(vals),'modeled_speedup_sample_sd':statistics.stdev(vals),
-            'measured_native_parallel_speedup_ratio_of_means':measured,
-            'signed_prediction_error_percent':100.0*(modeled-measured)/measured,
-            'absolute_prediction_error_percent':100.0*abs(modeled-measured)/measured,
-            'communication_cost_provenance':'0.0 in this OpenCV calibration adapter because the profiled DNN calls execute in one process/shared address space and no byte-level IPC cost was measured; no byte volume is inferred.',
-            'overlap_gap_provenance':'tgap=0.0 and async_eligible=false because the profiling campaign is intentionally single-threaded; parallel overlap is not inferred from sequential traces.',
-            'timing_provenance':'mean inclusive instrumented node time from five official OpenCV ENABLE_INSTRUMENTATION profiling runs.',
-            'call_count_provenance':'mean observed dynamic child-call count from the same five instrumented runs.',
-            'measurement_boundary':'The measured comparator is OpenCV native threaded execution on the identical fixed workload. It is an external real-runtime calibration of the modeled speedup magnitude, not a DTMC-GA-generated source rewrite.'
+              'exact_opencv_commit':'725e440d278aca07d35a5e8963ef990572b07316',
+              'empirical_units':len(classes_df),
+              'empirical_edges':len(edges_df),
+              'metric_node_count':sum(1 for r in classes if r['node_kind']=='metric'),
+              'structural_node_count':sum(1 for r in classes if r['node_kind']=='structural'),
+              'structural_nodes':sorted(structural_selected),
+              'dtmc_horizon':100,
+              'ga_seeds':30,
+              'modeled_speedup_mean':modeled,
+              'modeled_speedup_median':statistics.median(vals),
+              'modeled_speedup_sample_sd':statistics.stdev(vals),
+              'measured_native_parallel_speedup_ratio_of_means':measured,
+              'signed_prediction_error_percent':100.0*(modeled-measured)/measured,
+              'absolute_prediction_error_percent':100.0*abs(modeled-measured)/measured,
+              'structural_node_timing_provenance':'Structural trace-only parents such as ROOT have no metric-bearing TC/T line; their local_time is therefore fixed to 0.0 rather than inferred.',
+              'communication_cost_provenance':'0.0 in this OpenCV calibration adapter because the profiled DNN calls execute in one process/shared address space and no byte-level IPC cost was measured; no byte volume is inferred.',
+              'overlap_gap_provenance':'tgap=0.0 and async_eligible=false because the profiling campaign is intentionally single-threaded; parallel overlap is not inferred from sequential traces.',
+              'timing_provenance':'Mean inclusive instrumented node time from five official OpenCV ENABLE_INSTRUMENTATION profiling runs for metric-bearing nodes only.',
+              'call_count_provenance':'Mean observed dynamic child-call count from the same five instrumented runs.',
+              'measurement_boundary':'The measured comparator is OpenCV native threaded execution on the identical fixed workload. It is an external real-runtime calibration of modeled-speedup magnitude, not a DTMC-GA-generated source rewrite.'
           }
           (out/'model_vs_measured_summary.json').write_text(json.dumps(summary,indent=2))
           (out/'EMPIRICAL_ADAPTER_PROVENANCE.md').write_text(
-            '# Empirical OpenCV DTMC Adapter Provenance\n\n'
-            'The adapter uses executed OpenCV 4.7.0 instrumentation evidence only. Instrumented labels are aggregated into graph nodes; inclusive instrumented times provide node timing, observed parent-child call counts provide edge weights, communication cost is fixed to zero because no byte-level IPC was measured in the one-process target, and tgap is fixed to zero with async eligibility disabled because the profiling campaign is sequential. These choices are explicit evidence boundaries rather than invented measurements.\n'
+              '# Empirical OpenCV DTMC Adapter Provenance\n\n'
+              'The adapter uses executed OpenCV 4.7.0 instrumentation evidence only. '
+              'Metric-bearing labels provide inclusive node timing. Observed parent-child '
+              'trace relations provide edge weights. Structural parents present in the raw '
+              'trace but absent from metric-bearing rows (for example ROOT) are preserved '
+              'as structural graph nodes with local_time=0.0; no timing is invented for them. '
+              'Communication cost is fixed to zero because no byte-level IPC was measured in '
+              'the one-process target, and tgap is fixed to zero with asynchronous eligibility '
+              'disabled because the profiling campaign is sequential. These are explicit '
+              'evidence boundaries rather than inferred measurements.\n'
           )
           print(json.dumps(summary,indent=2))
           PY
@@ -225,13 +324,20 @@ jobs:
           if not native.get('all_exit_codes_zero'): raise RuntimeError('Native calibration has failed runs')
           if safety.get('safety_outcome')!='PASS_FAIL_CLOSED_IDENTITY': raise RuntimeError('Production safety gate did not PASS')
 
-          r1c2=f'''# Reviewer 1, Comment 2 — Final evidence response\n\n**Response:** We completed a real OpenCV 4.7.0 runtime calibration at exact commit `725e440d278aca07d35a5e8963ef990572b07316`. The same fixed five-convolution DNN workload was measured in a matched 30-pair protocol under one-thread and native-parallel OpenCV execution on the same hosted runner. The measured ratio-of-means speedup was **{model['measured_native_parallel_speedup_ratio_of_means']:.4f}x**. Separately, executed OpenCV instrumentation traces were converted into a bounded empirical DTMC input and the released DTMC-GA/DET evaluator was rerun over 30 seeds; the mean modeled speedup was **{model['modeled_speedup_mean']:.4f}x** (SD **{model['modeled_speedup_sample_sd']:.4f}**). The corresponding absolute modeled-versus-measured error was **{model['absolute_prediction_error_percent']:.2f}%**. We report this as a real-runtime calibration of the modeled-speedup magnitude, not as evidence that the artifact automatically rewrites OpenCV source. The measured parallel comparator uses OpenCV's native threaded execution, while production source transformation remains governed by the separate fail-closed safety boundary.\n'''
-          r1c4=f'''# Reviewer 1, Comment 4 — Final provenance response\n\n**Response:** We replaced the previously preparatory provenance statement with executed OpenCV 4.7.0 profiling evidence. Five independent official `ENABLE_INSTRUMENTATION=ON` runs produced real instrumented node timings, dynamic call counts, and parent-child interaction edges; the independent audit parsed **{prof['parsed_node_rows']}** node rows and **{prof['parsed_edge_rows']}** dynamic edge rows. Timing values are inclusive instrumented node times and call counts are observed dynamic counts from those runs. For the one-process OpenCV DNN calibration, no byte-level inter-process communication volume was measured, so the adapter assigns **communication cost = 0** rather than inventing a byte-transfer estimate. Because profiling was intentionally single-threaded, **tgap = 0** and asynchronous eligibility is disabled; no parallel-overlap quantity is inferred. Thus the provenance of every real-project timing/count/cost/gap field is explicit and reproducible, including the quantities that are zero by experimental design.\n'''
-          r3c3=f'''# Reviewer 3, Comment 3 — Final safety response\n\n**Response:** We extended the controlled safety tests to the exact OpenCV 4.7.0 DNN production source. The audited production implementation contains concrete pointer/storage aliasing, mutable-state side effects, lifetime/resource-release boundaries, and assertion/error-order hazards. Under the manuscript's fail-closed policy these unresolved hazards reject displacement; no unsafe production rewrite is forced. We then rebuilt the exact unchanged production target with AddressSanitizer and UndefinedBehaviorSanitizer and executed the fixed five-convolution workload in **{safety['sanitizer_runs']}** independent sanitizer runs. All completed with zero sanitizer findings, and the target-source SHA-256 remained unchanged before/after validation. This provides real-project transformation-safety evidence in the form required by the conservative policy: hazardous candidates are rejected rather than transformed. We do not claim an automatic OpenCV source rewrite where the safety gate does not authorize one.\n'''
+          r1c2=f'''# Reviewer 1, Comment 2 — Final evidence response\n\n**Response:** We completed a real OpenCV 4.7.0 runtime calibration at exact commit `725e440d278aca07d35a5e8963ef990572b07316`. The same fixed five-convolution DNN workload was measured in a matched 30-pair protocol under one-thread and native-parallel OpenCV execution on the same hosted runner. The measured ratio-of-means speedup was **{model['measured_native_parallel_speedup_ratio_of_means']:.4f}x**. Separately, executed OpenCV instrumentation traces were converted into a bounded empirical DTMC input and the released DTMC-GA/DET evaluator was rerun over 30 seeds; the mean modeled speedup was **{model['modeled_speedup_mean']:.4f}x** (SD **{model['modeled_speedup_sample_sd']:.4f}**). The corresponding absolute modeled-versus-measured difference was **{model['absolute_prediction_error_percent']:.2f}%**. We present this as a real-runtime calibration of modeled-speedup magnitude. The measured comparator is OpenCV's native threaded execution, not an executable produced by a DTMC-GA source rewrite; therefore we do not interpret this checkpoint as direct measured speedup of an automatically transformed DTMC-GA program.\n'''
+
+          r1c4=f'''# Reviewer 1, Comment 4 — Final provenance response\n\n**Response:** We replaced the previously preparatory provenance statement with executed OpenCV 4.7.0 profiling evidence. Five independent official `ENABLE_INSTRUMENTATION=ON` runs produced real instrumented node timings, dynamic call counts, and observed parent-child trace relations; the independent audit parsed **{prof['parsed_node_rows']}** metric-bearing node rows and **{prof['parsed_edge_rows']}** dynamic edge rows. Metric-bearing timing values are inclusive instrumented node times and call counts are observed dynamic counts from those runs. Structural trace parents without a metric-bearing TC/T record are retained with local time 0.0 rather than assigned invented timing. For the one-process OpenCV DNN calibration, no byte-level inter-process communication volume was measured, so the adapter assigns **communication cost = 0**. Because profiling was intentionally single-threaded, **tgap = 0** and asynchronous eligibility is disabled; no parallel-overlap quantity is inferred.\n'''
+
+          r3c3=f'''# Reviewer 3, Comment 3 — Final safety response\n\n**Response:** We extended the controlled safety tests to the exact OpenCV 4.7.0 DNN production source. The audited production implementation contains concrete pointer/storage aliasing, mutable-state side effects, lifetime/resource-release boundaries, and assertion/error-order hazards. Under the manuscript's fail-closed policy these unresolved hazards reject displacement; no unsafe production rewrite is forced. We then rebuilt the exact unchanged production target with AddressSanitizer and UndefinedBehaviorSanitizer and executed the fixed five-convolution workload in **{safety['sanitizer_runs']}** independent sanitizer runs. All completed with zero sanitizer findings, and the target-source SHA-256 remained unchanged before/after validation. This provides real-project transformation-safety evidence for the conservative rejection policy. We do not claim an automatic OpenCV source rewrite where the safety gate does not authorize one.\n'''
+
+          r3c1=f'''# Reviewer 3, Comment 1 — Evidence boundary\n\n**Response:** We added an executed real-world OpenCV 4.7.0 DNN checkpoint at exact commit `725e440d278aca07d35a5e8963ef990572b07316`, including instrumented profiling, 30-pair one-thread versus native-parallel runtime calibration, and a bounded empirical DTMC-GA/DET rerun. The measured native-parallel ratio-of-means speedup is **{model['measured_native_parallel_speedup_ratio_of_means']:.4f}x** and the bounded empirical model reports a mean modeled speedup of **{model['modeled_speedup_mean']:.4f}x**. However, the measured parallel executable is OpenCV's native threaded implementation, not a source-rewritten executable generated from the DTMC-GA partition. We therefore treat this comment as **partially addressed rather than fully closed**: the revision now demonstrates real-project build, profiling, runtime measurement, safety gating, and model calibration, but a matched DTMC-GA-generated optimized executable (or a second real project) is still required for a direct claim of measured DTMC-GA runtime speedup on production-scale software.\n'''
+
           (out/'R1C2_FINAL_RESPONSE.md').write_text(r1c2)
           (out/'R1C4_FINAL_RESPONSE.md').write_text(r1c4)
           (out/'R3C3_FINAL_RESPONSE.md').write_text(r3c3)
-          status=f'''# Final Reviewer Closure Evidence Status\n\n**Evidence gates: PASS for all three remaining comments.**\n\n- R1 C2: executed real-runtime modeled-vs-measured calibration available.\n- R1 C4: executed timing/call/interactions provenance available; communication and overlap boundaries explicitly zero/not inferred by design.\n- R3 C3: exact production-source fail-closed safety audit + ASan/UBSan validation available.\n\nThe evidence package is now sufficient to integrate these three responses into the manuscript. The repository does not claim that DTMC-GA automatically rewrites OpenCV C++; the native threaded comparison is identified as a runtime calibration checkpoint and the production safety result is a fail-closed identity outcome.\n'''
+          (out/'R3C1_EVIDENCE_BOUNDARY.md').write_text(r3c1)
+
+          status=f'''# Final Reviewer Closure Evidence Status\n\n**Executed evidence gates: PASS for profiling, native runtime calibration, and production safety.**\n\n- R1 C2: real-runtime modeled-vs-measured calibration is available, with the explicit limitation that the measured comparator is native OpenCV threading rather than a DTMC-GA-generated rewrite.\n- R1 C4: executed timing/call provenance is available; structural parents without timing records are retained at zero local time, and communication/overlap quantities are explicitly zero/not inferred by design.\n- R3 C3: exact production-source fail-closed safety audit plus ASan/UBSan validation is available.\n- R3 C1: **PARTIAL / OPEN**. Real-project execution and runtime calibration are available, but direct measured runtime speedup of a DTMC-GA-generated optimized OpenCV executable has not been demonstrated.\n\nThis package is suitable for manuscript integration only with these evidence boundaries stated explicitly. It must not be described as proof that DTMC-GA automatically rewrites OpenCV C++ or as direct measured DTMC-GA production speedup.\n'''
           (out/'FINAL_REVIEWER_CLOSURE_STATUS.md').write_text(status)
           PY
 
