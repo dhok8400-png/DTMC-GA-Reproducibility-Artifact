@@ -220,9 +220,7 @@ jobs:
               r'(?: L:(?P<local>[0-9.]+)% G:(?P<global>[0-9.]+)%)?\s*$'
           )
 
-          # OpenCV trace trees can be printed with different ASCII/Unicode branch markers.
-          # We only create parent-child edges when hierarchy is explicitly visible either
-          # through a branch marker or through differing indentation levels.
+          # OpenCV trace trees may use several ASCII/Unicode branch markers.
           branch_re = re.compile(
               r'(?P<branch>\|---|\\---|\+---|`---|├──|└──|├─|└─)'
           )
@@ -233,8 +231,9 @@ jobs:
           diagnostic_metric_lines = []
           section_diagnostics = []
 
-          def split_label_and_prefix(line, match):
-              left = line[:match.start()].expandtabs(4).rstrip()
+          def split_tree_prefix(left):
+              """Return label/tree metadata from the part before the metric suffix."""
+              left = left.expandtabs(4).rstrip()
               bm = branch_re.search(left)
               if bm:
                   prefix = left[:bm.start()]
@@ -262,42 +261,31 @@ jobs:
               if not records:
                   return []
 
-              # First preference: explicit tree branch markers.  The visual prefix before
-              # the branch marker normally grows as the call tree becomes deeper.
+              # If explicit branches exist, a non-branched record such as ROOT is depth 0.
+              # Branched records are at least depth 1; deeper branch prefixes increase depth.
               explicit = [r for r in records if r['has_branch']]
               if explicit:
-                  visual_widths = []
-                  for r in records:
-                      if r['has_branch']:
-                          # Keep spaces and tree continuation characters as visual columns.
-                          visual = r['prefix'].replace('│', '|')
-                          visual_widths.append(len(visual))
-
-                  positive_steps = sorted({w for w in visual_widths if w > 0})
-                  if positive_steps:
-                      # Derive the smallest observed indentation increment rather than
-                      # assuming that every OpenCV build uses exactly four characters.
-                      step = positive_steps[0]
-                      for a, b in zip(positive_steps, positive_steps[1:]):
-                          diff = b - a
-                          if diff > 0:
-                              step = min(step, diff)
-                  else:
-                      step = 4
-
+                  widths = sorted({
+                      len(r['prefix'].replace('│', '|'))
+                      for r in explicit
+                  })
+                  positive_diffs = [
+                      b - a for a, b in zip(widths, widths[1:]) if b > a
+                  ]
+                  step = min(positive_diffs) if positive_diffs else 4
                   step = max(1, step)
+
                   depths = []
                   for r in records:
                       if r['has_branch']:
                           visual = r['prefix'].replace('│', '|')
                           depths.append(len(visual) // step + 1)
                       else:
-                          # A line without a branch marker can be a root node.
+                          # ROOT (or another unbranched structural node) is a root.
                           depths.append(0)
                   return depths
 
-              # Second preference: pure indentation.  Map the distinct indentation
-              # widths to ordinal levels (0, 1, 2, ...) instead of assuming 2 or 4 spaces.
+              # Fallback for traces represented only by indentation.
               indents = sorted({r['leading_spaces'] for r in records})
               depth_map = {indent: idx for idx, indent in enumerate(indents)}
               return [depth_map[r['leading_spaces']] for r in records]
@@ -315,13 +303,14 @@ jobs:
               run_sections = 0
 
               def flush_section(section_records):
-                  nonlocal_vars = None
                   if not section_records:
                       return
 
                   depths = infer_depths(section_records)
                   stack = {}
                   section_edge_count = 0
+                  structural_count = 0
+                  metric_count = 0
 
                   for record, depth in zip(section_records, depths):
                       parent = stack.get(depth - 1, '') if depth > 0 else ''
@@ -330,6 +319,11 @@ jobs:
                           if d > depth:
                               del stack[d]
 
+                      if not record['is_metric']:
+                          structural_count += 1
+                          continue
+
+                      metric_count += 1
                       row = {
                           'run': run_idx,
                           'depth': depth,
@@ -343,6 +337,9 @@ jobs:
                       }
                       node_rows.append(row)
 
+                      # The edge is accepted only when the trace itself supplies a
+                      # parent through the visible hierarchy. In OpenCV 4.7.0's current
+                      # output this correctly records ROOT -> parallel_for_.
                       if parent:
                           edge_rows.append({
                               'run': run_idx,
@@ -357,6 +354,8 @@ jobs:
                   section_diagnostics.append({
                       'run': run_idx,
                       'records': len(section_records),
+                      'metric_records': metric_count,
+                      'structural_records': structural_count,
                       'edges': section_edge_count,
                       'explicit_branch_records': sum(
                           1 for r in section_records if r['has_branch']
@@ -365,6 +364,7 @@ jobs:
                           r['leading_spaces'] for r in section_records
                       }),
                       'depths': depths,
+                      'labels': [r['label'] for r in section_records],
                   })
 
               for line in lines:
@@ -386,41 +386,57 @@ jobs:
                       in_trace = False
                       continue
 
-                  if not in_trace or ' - TC:' not in line:
+                  if not in_trace or not stripped:
                       continue
 
                   m = metric_re.search(line)
-                  if not m:
+                  if m:
+                      parsed = split_tree_prefix(line[:m.start()])
+                      parsed.update({
+                          'is_metric': True,
+                          'threads': int(m.group('threads')),
+                          'calls': int(m.group('calls')),
+                          'total_ms': float(m.group('ms')),
+                          'local_pct': (
+                              float(m.group('local'))
+                              if m.group('local') is not None
+                              else ''
+                          ),
+                          'global_pct': (
+                              float(m.group('global'))
+                              if m.group('global') is not None
+                              else ''
+                          ),
+                      })
+                      current_section.append(parsed)
+
+                      if len(diagnostic_metric_lines) < 100:
+                          diagnostic_metric_lines.append({
+                              'run': run_idx,
+                              'raw': line,
+                              'left': parsed['left'],
+                              'label': parsed['label'],
+                              'has_branch': parsed['has_branch'],
+                              'branch': parsed['branch'],
+                              'leading_spaces': parsed['leading_spaces'],
+                          })
                       continue
 
-                  parsed = split_label_and_prefix(line, m)
-                  parsed.update({
-                      'threads': int(m.group('threads')),
-                      'calls': int(m.group('calls')),
-                      'total_ms': float(m.group('ms')),
-                      'local_pct': (
-                          float(m.group('local'))
-                          if m.group('local') is not None
-                          else ''
-                      ),
-                      'global_pct': (
-                          float(m.group('global'))
-                          if m.group('global') is not None
-                          else ''
-                      ),
-                  })
-                  current_section.append(parsed)
-
-                  if len(diagnostic_metric_lines) < 100:
-                      diagnostic_metric_lines.append({
-                          'run': run_idx,
-                          'raw': line,
-                          'left': parsed['left'],
-                          'label': parsed['label'],
-                          'has_branch': parsed['has_branch'],
-                          'branch': parsed['branch'],
-                          'leading_spaces': parsed['leading_spaces'],
+                  # Preserve non-metric structural tree nodes (notably ROOT).
+                  # This is the key correction: the original parser skipped ROOT
+                  # because ROOT has no " - TC:" metric suffix, leaving every metric
+                  # child without a parent.
+                  structural = split_tree_prefix(line)
+                  if structural['label']:
+                      structural.update({
+                          'is_metric': False,
+                          'threads': '',
+                          'calls': '',
+                          'total_ms': '',
+                          'local_pct': '',
+                          'global_pct': '',
                       })
+                      current_section.append(structural)
 
               if current_section:
                   flush_section(current_section)
@@ -431,8 +447,7 @@ jobs:
                       'warning': 'No [ TRACE ] section markers found in this log',
                   })
 
-          # Always write diagnostics before any hard failure.  This makes a failed
-          # GitHub Actions run inspectable through the uploaded artifact.
+          # Always write diagnostics before a hard failure so failed runs remain auditable.
           pathlib.Path('trace_metric_samples.txt').write_text(
               '\n'.join(
                   f"run={r['run']} branch={r['branch']!r} "
@@ -452,7 +467,7 @@ jobs:
 
           if not node_rows:
               raise RuntimeError(
-                  'No instrumented trace nodes were parsed from profiling logs. '
+                  'No instrumented trace metric nodes were parsed from profiling logs. '
                   'Inspect trace_metric_samples.txt and the raw profiling logs.'
               )
 
@@ -463,9 +478,8 @@ jobs:
               print('=== TRACE PARSE DIAGNOSTICS ===')
               print(pathlib.Path('trace_parse_diagnostics.json').read_text())
               raise RuntimeError(
-                  'No parent-child dynamic interaction edges were parsed. '
-                  'The raw trace contains metric nodes but no recoverable hierarchy. '
-                  'Inspect trace_metric_samples.txt and trace_parse_diagnostics.json.'
+                  'No parent-child dynamic interaction edges were parsed even after '
+                  'preserving structural ROOT/tree nodes. Inspect the diagnostics.'
               )
 
           with open('profile_nodes.csv', 'w', newline='') as f:
@@ -562,8 +576,12 @@ jobs:
               'parallel_overlap_measured': False,
               'sequential_overlap_by_design': 0,
               'edge_evidence_rule': (
-                  'parent-child edges accepted only from explicit trace-tree '
-                  'branch markers or distinct indentation levels'
+                  'edges are accepted only from the explicit OpenCV trace hierarchy; '
+                  'non-metric structural nodes such as ROOT are preserved as parents'
+              ),
+              'trace_granularity_note': (
+                  'OpenCV 4.7.0 --perf_instrument=2 exposes ROOT -> parallel_for_ for '
+                  'the selected convolution traces; no deeper call hierarchy is inferred'
               ),
           }
 
