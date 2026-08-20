@@ -1,0 +1,16 @@
+{
+  "audit_status": "PASS",
+  "exact_opencv_commit": "725e440d278aca07d35a5e8963ef990572b07316",
+  "warmup_logs": 2,
+  "profile_logs": 5,
+  "parsed_node_rows": 25,
+  "unique_parent_node_pairs": 1,
+  "parsed_edge_rows": 25,
+  "unique_parent_child_pairs": 1,
+  "max_threads_observed": 1,
+  "communication_bytes_measured": false,
+  "parallel_overlap_measured": false,
+  "sequential_overlap_by_design": 0,
+  "profile_nodes_csv_sha256": "bbacee65a5edc6ae8ee2f45152291b2355c57ace96d10d876763e11b693aad31",
+  "dynamic_edges_csv_sha256": "792876118c0756c7a26af9da363c30ae5127180ebd63c933b5c36da536af1340"
+}

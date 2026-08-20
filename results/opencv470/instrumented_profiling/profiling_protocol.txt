@@ -1,0 +1,15 @@
+OpenCV 4.7.0 instrumented profiling protocol
+Exact source commit: 725e440d278aca07d35a5e8963ef990572b07316
+Fixed workload: Conv.conv/0:Conv.conv/2:Conv.conv/28:Conv.conv/42:Conv.conv/69
+Instrumentation: official OpenCV ENABLE_INSTRUMENTATION=ON and --perf_instrument=2.
+Sequential controls: --perf_threads=1, OPENCV_FOR_THREADS_NUM=1, and one-CPU affinity.
+Warm-up: 2 untimed instrumented process runs.
+Profiling replicates: 5 independent instrumented process runs.
+OpenCV perf controls: seed=809564, min_samples=10, force_samples=100, time_limit=3.0 s/test.
+Evidence boundary: trace nodes provide observed instrumented function labels, thread counts,
+call counts, total instrumented time, and local/global time weights. Parent-child trace edges
+are accepted only when hierarchy is explicitly recoverable from OpenCV's printed trace tree
+using branch markers or indentation. No byte-level communication volume is inferred.
+Because the profiling run is intentionally single-threaded to match the sequential baseline,
+inter-thread execution overlap is zero by design and is not presented as a measured
+parallel-overlap result.

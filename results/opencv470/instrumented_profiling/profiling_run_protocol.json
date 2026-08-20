@@ -1,0 +1,25 @@
+{
+  "command": [
+    "build-profile/bin/opencv_perf_dnn",
+    "--gtest_filter=Conv.conv/0:Conv.conv/2:Conv.conv/28:Conv.conv/42:Conv.conv/69",
+    "--perf_threads=1",
+    "--perf_seed=809564",
+    "--perf_min_samples=10",
+    "--perf_force_samples=100",
+    "--perf_time_limit=3.0",
+    "--perf_instrument=2",
+    "--gtest_color=no"
+  ],
+  "environment_thread_controls": {
+    "OPENCV_FOR_THREADS_NUM": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1"
+  },
+  "cpu_affinity": [
+    0
+  ],
+  "warmup_runs": 2,
+  "profile_runs": 5
+}

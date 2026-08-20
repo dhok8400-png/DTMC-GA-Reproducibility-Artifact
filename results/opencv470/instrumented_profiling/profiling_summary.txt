@@ -1,0 +1,12 @@
+profile_runs: 5
+trace_sections: 25
+parsed_node_rows: 25
+unique_parent_node_pairs: 1
+parsed_edge_rows: 25
+unique_parent_child_pairs: 1
+max_threads_observed: 1
+communication_bytes_measured: False
+parallel_overlap_measured: False
+sequential_overlap_by_design: 0
+edge_evidence_rule: edges are accepted only from the explicit OpenCV trace hierarchy; non-metric structural nodes such as ROOT are preserved as parents
+trace_granularity_note: OpenCV 4.7.0 --perf_instrument=2 exposes ROOT -> parallel_for_ for the selected convolution traces; no deeper call hierarchy is inferred

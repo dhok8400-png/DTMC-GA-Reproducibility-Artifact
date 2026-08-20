@@ -1,0 +1,12 @@
+{
+  "run_id": 32367495393,
+  "run_number": 5,
+  "run_attempt": 1,
+  "head_sha": "e26f4fd86cf98ad0811ad0b64377e369ec9c4775",
+  "html_url": "https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact/actions/runs/32367495393",
+  "created_at": "2026-08-20T12:10:46Z",
+  "updated_at": "2026-08-20T12:19:19Z",
+  "artifact_id": 9406096774,
+  "artifact_name": "opencv470-instrumented-profiling",
+  "artifact_size_in_bytes": 32044
+}
