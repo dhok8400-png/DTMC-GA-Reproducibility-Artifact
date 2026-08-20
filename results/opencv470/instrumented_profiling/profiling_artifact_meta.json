@@ -1,12 +1,12 @@
 {
-  "run_id": 32385607556,
-  "run_number": 7,
+  "run_id": 32392680863,
+  "run_number": 8,
   "run_attempt": 1,
-  "head_sha": "5d5224710659da849ae3631c7aa2bd9b44e86986",
-  "html_url": "https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact/actions/runs/32385607556",
-  "created_at": "2026-08-20T15:21:08Z",
-  "updated_at": "2026-08-20T15:27:55Z",
-  "artifact_id": 9413016353,
+  "head_sha": "0cc5d2d47bfaeef2fda4a07a7b8f17e99699392f",
+  "html_url": "https://github.com/dhok8400-png/DTMC-GA-Reproducibility-Artifact/actions/runs/32392680863",
+  "created_at": "2026-08-20T16:33:41Z",
+  "updated_at": "2026-08-20T16:42:43Z",
+  "artifact_id": 9415740455,
   "artifact_name": "opencv470-instrumented-profiling",
-  "artifact_size_in_bytes": 32059
+  "artifact_size_in_bytes": 32081
 }

@@ -1,2 +1,2 @@
 parent,node,observations,mean_total_ms,median_total_ms,sample_sd_total_ms,mean_calls,min_calls,max_calls,max_threads_observed
-ROOT,parallel_for_,25,728.0752,378.59,997.5256359158562,10.12,10,13,1
+ROOT,parallel_for_,25,786.5076,407.19,1041.5215371204124,11.4,10,21,1
